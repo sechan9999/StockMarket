@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>경기도고양시일산동구개표상황표(39132) 개표상황표 분석 대시보드</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #141932;
+            --bg-card: #1a1f3a;
+            --text-primary: #e8eaf0;
+            --text-secondary: #a0a8c0;
+            --accent-blue: #4f9eff;
+            --accent-cyan: #00d4ff;
+            --border-color: #2a3150;
+            --success: #00e676;
+            --warning: #ffab00;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem;
+            background-attachment: fixed;
+        }
+
+        .dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border-color);
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 300;
+        }
+
+        .filter-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .filter-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(79, 158, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .btn-export {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 230, 118, 0.4);
+        }
+
+        .candidates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .candidate-checkbox {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .candidate-checkbox:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(79, 158, 255, 0.2);
+        }
+
+        .candidate-checkbox.selected {
+            border-width: 2px;
+            background: linear-gradient(135deg, rgba(79, 158, 255, 0.1), rgba(0, 212, 255, 0.1));
+        }
+
+        .candidate-checkbox.selected::before {
+            content: '✓';
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 28px;
+            height: 28px;
+            background: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .candidate-checkbox input {
+            display: none;
+        }
+
+        .candidate-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .candidate-stats {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .candidate-stats div {
+            margin-top: 0.3rem;
+        }
+
+        .selection-info {
+            text-align: center;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(79, 158, 255, 0.1);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--accent-cyan);
+        }
+
+        .chart-container {
+            height: 400px;
+            position: relative;
+        }
+
+        .reliability-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .reliability-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .reliability-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .reliability-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .reliability-stats {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .reliability-bar-container {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            height: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .reliability-bar {
+            height: 100%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            padding: 0 0.8rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: white;
+            position: relative;
+        }
+
+        .reliability-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .table-container {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow-x: auto;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.9rem;
+        }
+
+        thead {
+            background: var(--bg-secondary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 1rem 0.8rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        th.candidate-header {
+            background: var(--bg-secondary);
+            text-align: center;
+            border-left: 1px solid var(--border-color);
+        }
+
+        th.subheader {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            padding: 0.6rem 0.5rem;
+        }
+
+        tbody tr {
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: rgba(79, 158, 255, 0.05);
+        }
+
+        tbody tr.totals-row {
+            background: linear-gradient(135deg, rgba(79, 158, 255, 0.15), rgba(0, 212, 255, 0.15));
+            font-weight: 700;
+        }
+
+        td {
+            padding: 0.9rem 0.8rem;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        td.number {
+            font-family: 'JetBrains Mono', monospace;
+            text-align: right;
+        }
+
+        td.candidate-cell {
+            border-left: 1px solid var(--border-color);
+            text-align: right;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-message {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-hint {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .candidates-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .button-group {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // Sample data embedded
+        const VOTING_DATA = [
+    {
+        "id": 2,
+        "voting_place": "경기도고양시일산동구개표상황표(39132)",
+        "district_name": "경기도고양시일산동구개표상황표(39132) - 투표구 1",
+        "vote_type": "관내투표",
+        "valid_votes": 28562,
+        "invalid_votes": 0,
+        "total_votes": 28562,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 17163,
+                "reconfirm_votes": 655,
+                "total": 17818
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 6643,
+                "reconfirm_votes": 275,
+                "total": 6918
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 3351,
+                "reconfirm_votes": 112,
+                "total": 3463
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 324,
+                "reconfirm_votes": 14,
+                "total": 338
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 24,
+                "reconfirm_votes": 1,
+                "total": 25
+            }
+        ]
+    },
+    {
+        "id": 3,
+        "voting_place": "경기도고양시일산동구개표상황표(39132)",
+        "district_name": "경기도고양시일산동구개표상황표(39132) - 투표구 2",
+        "vote_type": "관내투표",
+        "valid_votes": 1997,
+        "invalid_votes": 0,
+        "total_votes": 1997,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1194,
+                "reconfirm_votes": 51,
+                "total": 1245
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 415,
+                "reconfirm_votes": 16,
+                "total": 431
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 275,
+                "reconfirm_votes": 6,
+                "total": 281
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 16,
+                "reconfirm_votes": 17,
+                "total": 33
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 4,
+                "total": 7
+            }
+        ]
+    }
+];
+
+        const CANDIDATES = [
+            { name: '이재명', color: '#E74C3C' },
+            { name: '김문수', color: '#3498DB' },
+            { name: '이준석', color: '#2ECC71' },
+            { name: '권영국', color: '#F39C12' },
+            { name: '송진호', color: '#9B59B6' }
+        ];
+
+        function Dashboard() {
+            const [selectedCandidates, setSelectedCandidates] = useState(
+                CANDIDATES.map(c => c.name)
+            );
+
+            // Calculate candidate totals
+            const candidateTotals = useMemo(() => {
+                const totals = {};
+                CANDIDATES.forEach(c => {
+                    totals[c.name] = {
+                        sorted: 0,
+                        reconfirm: 0,
+                        total: 0
+                    };
+                });
+
+                VOTING_DATA.forEach(district => {
+                    district.candidates.forEach(cand => {
+                        if (totals[cand.name]) {
+                            totals[cand.name].sorted += cand.sorted_votes;
+                            totals[cand.name].reconfirm += cand.reconfirm_votes;
+                            totals[cand.name].total += cand.total;
+                        }
+                    });
+                });
+
+                return totals;
+            }, []);
+
+            const toggleCandidate = (name) => {
+                setSelectedCandidates(prev =>
+                    prev.includes(name)
+                        ? prev.filter(c => c !== name)
+                        : [...prev, name]
+                );
+            };
+
+            const selectAll = () => {
+                setSelectedCandidates(CANDIDATES.map(c => c.name));
+            };
+
+            const clearAll = () => {
+                setSelectedCandidates([]);
+            };
+
+            const exportCSV = () => {
+                if (selectedCandidates.length === 0) {
+                    alert('선택된 후보자가 없습니다.');
+                    return;
+                }
+
+                let csv = '투표구,유형,유효투표,무효투표,전체투표';
+                selectedCandidates.forEach(name => {
+                    csv += `,${name}_분류,${name}_재확인,${name}_계`;
+                });
+                csv += '\n';
+
+                VOTING_DATA.forEach(district => {
+                    csv += `"${district.district_name}","${district.vote_type}",${district.valid_votes},${district.invalid_votes},${district.total_votes}`;
+
+                    selectedCandidates.forEach(name => {
+                        const cand = district.candidates.find(c => c.name === name);
+                        if (cand) {
+                            csv += `,${cand.sorted_votes},${cand.reconfirm_votes},${cand.total}`;
+                        } else {
+                            csv += ',0,0,0';
+                        }
+                    });
+
+                    csv += '\n';
+                });
+
+                // Add totals row
+                const totalValid = VOTING_DATA.reduce((sum, d) => sum + d.valid_votes, 0);
+                const totalInvalid = VOTING_DATA.reduce((sum, d) => sum + d.invalid_votes, 0);
+                const totalAll = totalValid + totalInvalid;
+
+                csv += `"합계","전체",${totalValid},${totalInvalid},${totalAll}`;
+
+                selectedCandidates.forEach(name => {
+                    const totals = candidateTotals[name];
+                    csv += `,${totals.sorted},${totals.reconfirm},${totals.total}`;
+                });
+
+                const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `경기도고양시일산동구개표상황표(39132)_개표상황_${selectedCandidates.length}명_${new Date().toISOString().split('T')[0]}.csv`;
+                link.click();
+            };
+
+            return (
+                <div className="dashboard">
+                    <div className="header">
+                        <h1>경기도고양시일산동구개표상황표(39132) 개표상황표 분석 대시보드</h1>
+                        <div className="subtitle">제21대 대통령선거 투표 심사·집계 분석</div>
+                    </div>
+
+                    <CandidateFilter
+                        selectedCandidates={selectedCandidates}
+                        candidateTotals={candidateTotals}
+                        onToggle={toggleCandidate}
+                        onSelectAll={selectAll}
+                        onClearAll={clearAll}
+                    />
+
+                    <div className="charts-grid">
+                        <ValidInvalidChart data={VOTING_DATA} />
+                        <ReliabilityChart
+                            candidateTotals={candidateTotals}
+                            selectedCandidates={selectedCandidates}
+                        />
+                    </div>
+
+                    <DataTable
+                        data={VOTING_DATA}
+                        selectedCandidates={selectedCandidates}
+                        candidateTotals={candidateTotals}
+                        onExport={exportCSV}
+                    />
+                </div>
+            );
+        }
+
+        function CandidateFilter({
+            selectedCandidates,
+            candidateTotals,
+            onToggle,
+            onSelectAll,
+            onClearAll
+        }) {
+            return (
+                <div className="filter-section">
+                    <div className="filter-header">
+                        <div className="filter-title">후보자 필터</div>
+                        <div className="button-group">
+                            <button className="btn btn-primary" onClick={onSelectAll}>
+                                전체선택
+                            </button>
+                            <button className="btn btn-secondary" onClick={onClearAll}>
+                                전체해제
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="candidates-grid">
+                        {CANDIDATES.map(candidate => {
+                            const isSelected = selectedCandidates.includes(candidate.name);
+                            const totals = candidateTotals[candidate.name];
+
+                            return (
+                                <div
+                                    key={candidate.name}
+                                    className={`candidate-checkbox ${isSelected ? 'selected' : ''}`}
+                                    onClick={() => onToggle(candidate.name)}
+                                    style={{
+                                        borderColor: isSelected ? candidate.color : undefined
+                                    }}
+                                >
+                                    <input type="checkbox" checked={isSelected} readOnly />
+                                    <div
+                                        className="candidate-name"
+                                        style={{ color: candidate.color }}
+                                    >
+                                        {candidate.name}
+                                    </div>
+                                    <div className="candidate-stats">
+                                        <div>분류된표: {totals.sorted.toLocaleString()}</div>
+                                        <div>재검표수: {totals.reconfirm.toLocaleString()}</div>
+                                        <div>계: {totals.total.toLocaleString()}</div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="selection-info">
+                        {selectedCandidates.length}명의 후보자 선택됨
+                    </div>
+                </div>
+            );
+        }
+
+        function ValidInvalidChart({ data }) {
+            const canvasRef = React.useRef(null);
+            const chartRef = React.useRef(null);
+
+            useEffect(() => {
+                if (!canvasRef.current) return;
+
+                // Group by voting place
+                const placeData = {};
+                data.forEach(district => {
+                    if (!placeData[district.voting_place]) {
+                        placeData[district.voting_place] = {
+                            valid: 0,
+                            invalid: 0
+                        };
+                    }
+                    placeData[district.voting_place].valid += district.valid_votes;
+                    placeData[district.voting_place].invalid += district.invalid_votes;
+                });
+
+                const labels = Object.keys(placeData);
+                const validData = labels.map(label => placeData[label].valid);
+                const invalidData = labels.map(label => placeData[label].invalid);
+
+                if (chartRef.current) {
+                    chartRef.current.destroy();
+                }
+
+                const ctx = canvasRef.current.getContext('2d');
+                chartRef.current = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: '유효투표',
+                                data: validData,
+                                backgroundColor: 'rgba(79, 158, 255, 0.8)',
+                                borderColor: 'rgba(79, 158, 255, 1)',
+                                borderWidth: 2
+                            },
+                            {
+                                label: '무효투표',
+                                data: invalidData,
+                                backgroundColor: 'rgba(255, 107, 107, 0.8)',
+                                borderColor: 'rgba(255, 107, 107, 1)',
+                                borderWidth: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#e8eaf0',
+                                    font: {
+                                        family: "'Noto Sans KR', sans-serif",
+                                        size: 12
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(26, 31, 58, 0.95)',
+                                titleColor: '#e8eaf0',
+                                bodyColor: '#a0a8c0',
+                                borderColor: '#2a3150',
+                                borderWidth: 1,
+                                padding: 12,
+                                titleFont: {
+                                    family: "'Noto Sans KR', sans-serif"
+                                },
+                                bodyFont: {
+                                    family: "'JetBrains Mono', monospace"
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    color: 'rgba(42, 49, 80, 0.5)'
+                                },
+                                ticks: {
+                                    color: '#a0a8c0',
+                                    font: {
+                                        family: "'Noto Sans KR', sans-serif"
+                                    }
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    color: 'rgba(42, 49, 80, 0.5)'
+                                },
+                                ticks: {
+                                    color: '#a0a8c0',
+                                    font: {
+                                        family: "'JetBrains Mono', monospace"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                return () => {
+                    if (chartRef.current) {
+                        chartRef.current.destroy();
+                    }
+                };
+            }, [data]);
+
+            return (
+                <div className="chart-card">
+                    <div className="chart-title">투표구별 유효/무효 투표 현황</div>
+                    <div className="chart-container">
+                        <canvas ref={canvasRef}></canvas>
+                    </div>
+                </div>
+            );
+        }
+
+        function ReliabilityChart({ candidateTotals, selectedCandidates }) {
+            return (
+                <div className="chart-card">
+                    <div className="chart-title">후보자별 득표 신뢰도 분석</div>
+                    <div className="chart-container">
+                        <div className="reliability-bars">
+                            {CANDIDATES.filter(c => selectedCandidates.includes(c.name)).map(candidate => {
+                                const totals = candidateTotals[candidate.name];
+                                const sortedRate = totals.total > 0 ? (totals.sorted / totals.total * 100).toFixed(1) : "0.0";
+                                const reconfirmRate = totals.total > 0 ? (totals.reconfirm / totals.total * 100).toFixed(1) : "0.0";
+
+                                return (
+                                    <div key={candidate.name} className="reliability-item">
+                                        <div className="reliability-header">
+                                            <div className="reliability-name" style={{ color: candidate.color }}>
+                                                {candidate.name}
+                                            </div>
+                                            <div className="reliability-stats">
+                                                분류: {sortedRate}% | 재확인: {reconfirmRate}%
+                                            </div>
+                                        </div>
+                                        <div className="reliability-bar-container">
+                                            <div
+                                                className="reliability-bar"
+                                                style={{
+                                                    width: `${sortedRate}%`,
+                                                    background: `linear-gradient(90deg, ${candidate.color}, ${candidate.color}dd)`
+                                                }}
+                                            >
+                                                {sortedRate}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        {selectedCandidates.length === 0 && (
+                            <div className="empty-state">
+                                <div className="empty-icon">📊</div>
+                                <div className="empty-message">선택된 후보자가 없습니다</div>
+                                <div className="empty-hint">위에서 후보자를 선택해주세요</div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function DataTable({ data, selectedCandidates, candidateTotals, onExport }) {
+            const totals = useMemo(() => {
+                return {
+                    valid: data.reduce((sum, d) => sum + d.valid_votes, 0),
+                    invalid: data.reduce((sum, d) => sum + d.invalid_votes, 0),
+                    total: data.reduce((sum, d) => sum + d.total_votes, 0)
+                };
+            }, [data]);
+
+            return (
+                <div className="table-container">
+                    <div className="table-header">
+                        <div className="chart-title">상세 심사·집계표</div>
+                        <button
+                            className="btn btn-export"
+                            onClick={onExport}
+                            disabled={selectedCandidates.length === 0}
+                        >
+                            📥 CSV 내보내기
+                        </button>
+                    </div>
+
+                    {selectedCandidates.length === 0 ? (
+                        <div className="empty-state">
+                            <div className="empty-icon">📋</div>
+                            <div className="empty-message">선택된 후보자가 없습니다</div>
+                            <div className="empty-hint">후보자를 선택하면 상세 데이터를 확인할 수 있습니다</div>
+                        </div>
+                    ) : (
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th rowSpan="2">투표구</th>
+                                    <th rowSpan="2">유형</th>
+                                    <th rowSpan="2">유효투표</th>
+                                    <th rowSpan="2">무효투표</th>
+                                    <th rowSpan="2">전체투표</th>
+                                    {selectedCandidates.map(name => (
+                                        <th
+                                            key={name}
+                                            colSpan="3"
+                                            className="candidate-header"
+                                            style={{ color: CANDIDATES.find(c => c.name === name)?.color }}
+                                        >
+                                            {name}
+                                        </th>
+                                    ))}
+                                </tr>
+                                <tr>
+                                    {selectedCandidates.map(name => (
+                                        <React.Fragment key={name}>
+                                            <th className="subheader">분류</th>
+                                            <th className="subheader">재확인</th>
+                                            <th className="subheader">계</th>
+                                        </React.Fragment>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data.map((district, idx) => (
+                                    <tr key={idx}>
+                                        <td>{district.district_name}</td>
+                                        <td>{district.vote_type}</td>
+                                        <td className="number">{district.valid_votes.toLocaleString()}</td>
+                                        <td className="number">{district.invalid_votes.toLocaleString()}</td>
+                                        <td className="number">{district.total_votes.toLocaleString()}</td>
+                                        {selectedCandidates.map(name => {
+                                            const cand = district.candidates.find(c => c.name === name);
+                                            return (
+                                                <React.Fragment key={name}>
+                                                    <td className="candidate-cell number">
+                                                        {cand ? cand.sorted_votes.toLocaleString() : '0'}
+                                                    </td>
+                                                    <td className="candidate-cell number">
+                                                        {cand ? cand.reconfirm_votes.toLocaleString() : '0'}
+                                                    </td>
+                                                    <td className="candidate-cell number">
+                                                        {cand ? cand.total.toLocaleString() : '0'}
+                                                    </td>
+                                                </React.Fragment>
+                                            );
+                                        })}
+                                    </tr>
+                                ))}
+                                <tr className="totals-row">
+                                    <td colSpan="2">합계</td>
+                                    <td className="number">{totals.valid.toLocaleString()}</td>
+                                    <td className="number">{totals.invalid.toLocaleString()}</td>
+                                    <td className="number">{totals.total.toLocaleString()}</td>
+                                    {selectedCandidates.map(name => {
+                                        const t = candidateTotals[name];
+                                        return (
+                                            <React.Fragment key={name}>
+                                                <td className="candidate-cell number">{t.sorted.toLocaleString()}</td>
+                                                <td className="candidate-cell number">{t.reconfirm.toLocaleString()}</td>
+                                                <td className="candidate-cell number">{t.total.toLocaleString()}</td>
+                                            </React.Fragment>
+                                        );
+                                    })}
+                                </tr>
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<Dashboard />);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,4810 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>경기도고양시일산서구개표상황표(39133) 개표상황표 분석 대시보드</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #141932;
+            --bg-card: #1a1f3a;
+            --text-primary: #e8eaf0;
+            --text-secondary: #a0a8c0;
+            --accent-blue: #4f9eff;
+            --accent-cyan: #00d4ff;
+            --border-color: #2a3150;
+            --success: #00e676;
+            --warning: #ffab00;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem;
+            background-attachment: fixed;
+        }
+
+        .dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border-color);
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 300;
+        }
+
+        .filter-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .filter-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(79, 158, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .btn-export {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 230, 118, 0.4);
+        }
+
+        .candidates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .candidate-checkbox {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .candidate-checkbox:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(79, 158, 255, 0.2);
+        }
+
+        .candidate-checkbox.selected {
+            border-width: 2px;
+            background: linear-gradient(135deg, rgba(79, 158, 255, 0.1), rgba(0, 212, 255, 0.1));
+        }
+
+        .candidate-checkbox.selected::before {
+            content: '✓';
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 28px;
+            height: 28px;
+            background: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .candidate-checkbox input {
+            display: none;
+        }
+
+        .candidate-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .candidate-stats {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .candidate-stats div {
+            margin-top: 0.3rem;
+        }
+
+        .selection-info {
+            text-align: center;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(79, 158, 255, 0.1);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--accent-cyan);
+        }
+
+        .chart-container {
+            height: 400px;
+            position: relative;
+        }
+
+        .reliability-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .reliability-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .reliability-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .reliability-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .reliability-stats {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .reliability-bar-container {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            height: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .reliability-bar {
+            height: 100%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            padding: 0 0.8rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: white;
+            position: relative;
+        }
+
+        .reliability-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .table-container {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow-x: auto;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.9rem;
+        }
+
+        thead {
+            background: var(--bg-secondary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 1rem 0.8rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        th.candidate-header {
+            background: var(--bg-secondary);
+            text-align: center;
+            border-left: 1px solid var(--border-color);
+        }
+
+        th.subheader {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            padding: 0.6rem 0.5rem;
+        }
+
+        tbody tr {
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: rgba(79, 158, 255, 0.05);
+        }
+
+        tbody tr.totals-row {
+            background: linear-gradient(135deg, rgba(79, 158, 255, 0.15), rgba(0, 212, 255, 0.15));
+            font-weight: 700;
+        }
+
+        td {
+            padding: 0.9rem 0.8rem;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        td.number {
+            font-family: 'JetBrains Mono', monospace;
+            text-align: right;
+        }
+
+        td.candidate-cell {
+            border-left: 1px solid var(--border-color);
+            text-align: right;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-message {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-hint {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .candidates-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .button-group {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // Sample data embedded
+        const VOTING_DATA = [
+    {
+        "id": 2,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 1",
+        "vote_type": "관내투표",
+        "valid_votes": 1627,
+        "invalid_votes": 0,
+        "total_votes": 1627,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 603,
+                "reconfirm_votes": 6,
+                "total": 609
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 670,
+                "reconfirm_votes": 213,
+                "total": 883
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 107,
+                "reconfirm_votes": 3,
+                "total": 110
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 12,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 3,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 2",
+        "vote_type": "관내투표",
+        "valid_votes": 2631,
+        "invalid_votes": 0,
+        "total_votes": 2631,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 772,
+                "reconfirm_votes": 789,
+                "total": 1561
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 789,
+                "reconfirm_votes": 20,
+                "total": 809
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 116,
+                "reconfirm_votes": 116,
+                "total": 232
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 14,
+                "reconfirm_votes": 14,
+                "total": 28
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 4,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 3",
+        "vote_type": "관내투표",
+        "valid_votes": 1268,
+        "invalid_votes": 0,
+        "total_votes": 1268,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 465,
+                "reconfirm_votes": 10,
+                "total": 475
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 655,
+                "reconfirm_votes": 13,
+                "total": 668
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 83,
+                "reconfirm_votes": 2,
+                "total": 85
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 20,
+                "reconfirm_votes": 20,
+                "total": 40
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 5,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 4",
+        "vote_type": "관내투표",
+        "valid_votes": 1729,
+        "invalid_votes": 0,
+        "total_votes": 1729,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 765,
+                "reconfirm_votes": 8,
+                "total": 773
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 778,
+                "reconfirm_votes": 12,
+                "total": 790
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 138,
+                "reconfirm_votes": 2,
+                "total": 140
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 13,
+                "total": 25
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 6,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 5",
+        "vote_type": "관내투표",
+        "valid_votes": 1820,
+        "invalid_votes": 0,
+        "total_votes": 1820,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 657,
+                "reconfirm_votes": 13,
+                "total": 670
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 898,
+                "reconfirm_votes": 26,
+                "total": 924
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 121,
+                "reconfirm_votes": 0,
+                "total": 121
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 24,
+                "reconfirm_votes": 20,
+                "total": 44
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 60,
+                "total": 61
+            }
+        ]
+    },
+    {
+        "id": 7,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 6",
+        "vote_type": "관내투표",
+        "valid_votes": 1565,
+        "invalid_votes": 0,
+        "total_votes": 1565,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 618,
+                "reconfirm_votes": 8,
+                "total": 626
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 741,
+                "reconfirm_votes": 20,
+                "total": 761
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 142,
+                "reconfirm_votes": 1,
+                "total": 143
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 17,
+                "reconfirm_votes": 17,
+                "total": 34
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 8,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 7",
+        "vote_type": "관내투표",
+        "valid_votes": 1792,
+        "invalid_votes": 0,
+        "total_votes": 1792,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 470,
+                "reconfirm_votes": 16,
+                "total": 486
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 552,
+                "reconfirm_votes": 563,
+                "total": 1115
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 86,
+                "reconfirm_votes": 86,
+                "total": 172
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 9,
+                "reconfirm_votes": 9,
+                "total": 18
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 9,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 8",
+        "vote_type": "관내투표",
+        "valid_votes": 3328,
+        "invalid_votes": 0,
+        "total_votes": 3328,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 969,
+                "reconfirm_votes": 980,
+                "total": 1949
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1130,
+                "reconfirm_votes": 20,
+                "total": 1150
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 171,
+                "reconfirm_votes": 2,
+                "total": 173
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 27,
+                "reconfirm_votes": 27,
+                "total": 54
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 10,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 9",
+        "vote_type": "관내투표",
+        "valid_votes": 1687,
+        "invalid_votes": 0,
+        "total_votes": 1687,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 624,
+                "reconfirm_votes": 0,
+                "total": 624
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 915,
+                "reconfirm_votes": 0,
+                "total": 915
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 133,
+                "reconfirm_votes": 0,
+                "total": 133
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 14,
+                "reconfirm_votes": 0,
+                "total": 14
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 11,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 10",
+        "vote_type": "관내투표",
+        "valid_votes": 1147,
+        "invalid_votes": 0,
+        "total_votes": 1147,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 402,
+                "reconfirm_votes": 13,
+                "total": 415
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 630,
+                "reconfirm_votes": 11,
+                "total": 641
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 58,
+                "reconfirm_votes": 3,
+                "total": 61
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 12,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 5,
+                "reconfirm_votes": 1,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 12,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 11",
+        "vote_type": "관내투표",
+        "valid_votes": 1270,
+        "invalid_votes": 0,
+        "total_votes": 1270,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 466,
+                "reconfirm_votes": 16,
+                "total": 482
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 673,
+                "reconfirm_votes": 0,
+                "total": 673
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 80,
+                "reconfirm_votes": 1,
+                "total": 81
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 14,
+                "reconfirm_votes": 14,
+                "total": 28
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 13,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 12",
+        "vote_type": "관내투표",
+        "valid_votes": 2021,
+        "invalid_votes": 0,
+        "total_votes": 2021,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 567,
+                "reconfirm_votes": 9,
+                "total": 576
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 640,
+                "reconfirm_votes": 652,
+                "total": 1292
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 129,
+                "reconfirm_votes": 3,
+                "total": 132
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 0,
+                "total": 12
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 5,
+                "total": 9
+            }
+        ]
+    },
+    {
+        "id": 14,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 13",
+        "vote_type": "관내투표",
+        "valid_votes": 2123,
+        "invalid_votes": 0,
+        "total_votes": 2123,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 837,
+                "reconfirm_votes": 5,
+                "total": 842
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1031,
+                "reconfirm_votes": 16,
+                "total": 1047
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 198,
+                "reconfirm_votes": 3,
+                "total": 201
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 31,
+                "reconfirm_votes": 1,
+                "total": 32
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 15,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 14",
+        "vote_type": "관내투표",
+        "valid_votes": 4076,
+        "invalid_votes": 0,
+        "total_votes": 4076,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 877,
+                "reconfirm_votes": 0,
+                "total": 877
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 876,
+                "reconfirm_votes": 2120,
+                "total": 2996
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 152,
+                "reconfirm_votes": 0,
+                "total": 152
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 25,
+                "reconfirm_votes": 26,
+                "total": 51
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 16,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 15",
+        "vote_type": "관내투표",
+        "valid_votes": 1507,
+        "invalid_votes": 0,
+        "total_votes": 1507,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 703,
+                "reconfirm_votes": 10,
+                "total": 713
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 660,
+                "reconfirm_votes": 14,
+                "total": 674
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 95,
+                "reconfirm_votes": 1,
+                "total": 96
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 12,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 17,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 16",
+        "vote_type": "관내투표",
+        "valid_votes": 2242,
+        "invalid_votes": 0,
+        "total_votes": 2242,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 868,
+                "reconfirm_votes": 21,
+                "total": 889
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 792,
+                "reconfirm_votes": 194,
+                "total": 986
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 160,
+                "reconfirm_votes": 164,
+                "total": 324
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 21,
+                "reconfirm_votes": 21,
+                "total": 42
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 18,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 17",
+        "vote_type": "관내투표",
+        "valid_votes": 1573,
+        "invalid_votes": 0,
+        "total_votes": 1573,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 628,
+                "reconfirm_votes": 5,
+                "total": 633
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 756,
+                "reconfirm_votes": 14,
+                "total": 770
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 151,
+                "reconfirm_votes": 2,
+                "total": 153
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 17,
+                "reconfirm_votes": 0,
+                "total": 17
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 19,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 18",
+        "vote_type": "관내투표",
+        "valid_votes": 530758,
+        "invalid_votes": 0,
+        "total_votes": 530758,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 564,
+                "reconfirm_votes": 6,
+                "total": 570
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 527,
+                "reconfirm_votes": 529534,
+                "total": 530061
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 97,
+                "reconfirm_votes": 5,
+                "total": 102
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 11,
+                "reconfirm_votes": 11,
+                "total": 22
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 1,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 20,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 19",
+        "vote_type": "관내투표",
+        "valid_votes": 3112,
+        "invalid_votes": 0,
+        "total_votes": 3112,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 651,
+                "reconfirm_votes": 660,
+                "total": 1311
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 792,
+                "reconfirm_votes": 807,
+                "total": 1599
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 145,
+                "reconfirm_votes": 4,
+                "total": 149
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 16,
+                "reconfirm_votes": 0,
+                "total": 16
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 35,
+                "total": 37
+            }
+        ]
+    },
+    {
+        "id": 21,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 20",
+        "vote_type": "관내투표",
+        "valid_votes": 1758,
+        "invalid_votes": 0,
+        "total_votes": 1758,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 498,
+                "reconfirm_votes": 509,
+                "total": 1007
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 617,
+                "reconfirm_votes": 6,
+                "total": 623
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 93,
+                "reconfirm_votes": 3,
+                "total": 96
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 16,
+                "reconfirm_votes": 16,
+                "total": 32
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 22,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 21",
+        "vote_type": "관내투표",
+        "valid_votes": 1384,
+        "invalid_votes": 0,
+        "total_votes": 1384,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 523,
+                "reconfirm_votes": 6,
+                "total": 529
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 609,
+                "reconfirm_votes": 7,
+                "total": 616
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 110,
+                "reconfirm_votes": 111,
+                "total": 221
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 9,
+                "reconfirm_votes": 9,
+                "total": 18
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 23,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 22",
+        "vote_type": "관내투표",
+        "valid_votes": 1603,
+        "invalid_votes": 0,
+        "total_votes": 1603,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 705,
+                "reconfirm_votes": 8,
+                "total": 713
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 729,
+                "reconfirm_votes": 8,
+                "total": 737
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 128,
+                "reconfirm_votes": 1,
+                "total": 129
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 10,
+                "reconfirm_votes": 10,
+                "total": 20
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 24,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 23",
+        "vote_type": "관내투표",
+        "valid_votes": 2234,
+        "invalid_votes": 0,
+        "total_votes": 2234,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 684,
+                "reconfirm_votes": 691,
+                "total": 1375
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 688,
+                "reconfirm_votes": 6,
+                "total": 694
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 126,
+                "reconfirm_votes": 2,
+                "total": 128
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 21,
+                "reconfirm_votes": 0,
+                "total": 21
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 15,
+                "total": 16
+            }
+        ]
+    },
+    {
+        "id": 25,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 24",
+        "vote_type": "관내투표",
+        "valid_votes": 1762,
+        "invalid_votes": 0,
+        "total_votes": 1762,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 802,
+                "reconfirm_votes": 8,
+                "total": 810
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 766,
+                "reconfirm_votes": 15,
+                "total": 781
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 120,
+                "reconfirm_votes": 4,
+                "total": 124
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 22,
+                "reconfirm_votes": 22,
+                "total": 44
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 2,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 26,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 25",
+        "vote_type": "관내투표",
+        "valid_votes": 1775,
+        "invalid_votes": 0,
+        "total_votes": 1775,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 772,
+                "reconfirm_votes": 12,
+                "total": 784
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 772,
+                "reconfirm_votes": 11,
+                "total": 783
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 167,
+                "reconfirm_votes": 7,
+                "total": 174
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 15,
+                "reconfirm_votes": 15,
+                "total": 30
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 27,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 26",
+        "vote_type": "관내투표",
+        "valid_votes": 1605,
+        "invalid_votes": 0,
+        "total_votes": 1605,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 712,
+                "reconfirm_votes": 4,
+                "total": 716
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 738,
+                "reconfirm_votes": 13,
+                "total": 751
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 117,
+                "reconfirm_votes": 1,
+                "total": 118
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 10,
+                "reconfirm_votes": 10,
+                "total": 20
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 28,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 27",
+        "vote_type": "관내투표",
+        "valid_votes": 860,
+        "invalid_votes": 0,
+        "total_votes": 860,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 348,
+                "reconfirm_votes": 0,
+                "total": 348
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 428,
+                "reconfirm_votes": 6,
+                "total": 434
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 71,
+                "reconfirm_votes": 1,
+                "total": 72
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 29,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 28",
+        "vote_type": "관내투표",
+        "valid_votes": 968,
+        "invalid_votes": 0,
+        "total_votes": 968,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 398,
+                "reconfirm_votes": 6,
+                "total": 404
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 481,
+                "reconfirm_votes": 0,
+                "total": 481
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 64,
+                "reconfirm_votes": 0,
+                "total": 64
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 14,
+                "reconfirm_votes": 1,
+                "total": 15
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 30,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 29",
+        "vote_type": "관내투표",
+        "valid_votes": 2125,
+        "invalid_votes": 0,
+        "total_votes": 2125,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 933,
+                "reconfirm_votes": 0,
+                "total": 933
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 977,
+                "reconfirm_votes": 0,
+                "total": 977
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 187,
+                "reconfirm_votes": 3,
+                "total": 190
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 23,
+                "reconfirm_votes": 1,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 31,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 30",
+        "vote_type": "관내투표",
+        "valid_votes": 2774,
+        "invalid_votes": 0,
+        "total_votes": 2774,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 725,
+                "reconfirm_votes": 10,
+                "total": 735
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 906,
+                "reconfirm_votes": 923,
+                "total": 1829
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 118,
+                "reconfirm_votes": 44,
+                "total": 162
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 24,
+                "reconfirm_votes": 24,
+                "total": 48
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 32,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 31",
+        "vote_type": "관내투표",
+        "valid_votes": 2029,
+        "invalid_votes": 0,
+        "total_votes": 2029,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 906,
+                "reconfirm_votes": 6,
+                "total": 912
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 729,
+                "reconfirm_votes": 7,
+                "total": 736
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 159,
+                "reconfirm_votes": 160,
+                "total": 319
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 30,
+                "reconfirm_votes": 30,
+                "total": 60
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 33,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 32",
+        "vote_type": "관내투표",
+        "valid_votes": 1668,
+        "invalid_votes": 0,
+        "total_votes": 1668,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 567,
+                "reconfirm_votes": 15,
+                "total": 582
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 799,
+                "reconfirm_votes": 38,
+                "total": 837
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 113,
+                "reconfirm_votes": 114,
+                "total": 227
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 11,
+                "reconfirm_votes": 11,
+                "total": 22
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 34,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 33",
+        "vote_type": "관내투표",
+        "valid_votes": 1418,
+        "invalid_votes": 0,
+        "total_votes": 1418,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 574,
+                "reconfirm_votes": 8,
+                "total": 582
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 697,
+                "reconfirm_votes": 11,
+                "total": 708
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 114,
+                "reconfirm_votes": 2,
+                "total": 116
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 11,
+                "reconfirm_votes": 0,
+                "total": 11
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 35,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 34",
+        "vote_type": "관내투표",
+        "valid_votes": 1575,
+        "invalid_votes": 0,
+        "total_votes": 1575,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 581,
+                "reconfirm_votes": 4,
+                "total": 585
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 742,
+                "reconfirm_votes": 17,
+                "total": 759
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 100,
+                "reconfirm_votes": 101,
+                "total": 201
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 13,
+                "reconfirm_votes": 13,
+                "total": 26
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 36,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 35",
+        "vote_type": "관내투표",
+        "valid_votes": 1655,
+        "invalid_votes": 0,
+        "total_votes": 1655,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 683,
+                "reconfirm_votes": 16,
+                "total": 699
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 740,
+                "reconfirm_votes": 25,
+                "total": 765
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 137,
+                "reconfirm_votes": 5,
+                "total": 142
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 23,
+                "reconfirm_votes": 24,
+                "total": 47
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 0,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 37,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 36",
+        "vote_type": "관내투표",
+        "valid_votes": 857,
+        "invalid_votes": 0,
+        "total_votes": 857,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 342,
+                "reconfirm_votes": 10,
+                "total": 352
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 385,
+                "reconfirm_votes": 3,
+                "total": 388
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 54,
+                "reconfirm_votes": 55,
+                "total": 109
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 7,
+                "reconfirm_votes": 1,
+                "total": 8
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 38,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 37",
+        "vote_type": "관내투표",
+        "valid_votes": 1507,
+        "invalid_votes": 0,
+        "total_votes": 1507,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 556,
+                "reconfirm_votes": 8,
+                "total": 564
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 778,
+                "reconfirm_votes": 21,
+                "total": 799
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 121,
+                "reconfirm_votes": 0,
+                "total": 121
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 20,
+                "reconfirm_votes": 1,
+                "total": 21
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 39,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 38",
+        "vote_type": "관내투표",
+        "valid_votes": 1641,
+        "invalid_votes": 0,
+        "total_votes": 1641,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 577,
+                "reconfirm_votes": 0,
+                "total": 577
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 901,
+                "reconfirm_votes": 0,
+                "total": 901
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 122,
+                "reconfirm_votes": 1,
+                "total": 123
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 20,
+                "reconfirm_votes": 20,
+                "total": 40
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 40,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 39",
+        "vote_type": "관내투표",
+        "valid_votes": 1179,
+        "invalid_votes": 0,
+        "total_votes": 1179,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 511,
+                "reconfirm_votes": 0,
+                "total": 511
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 574,
+                "reconfirm_votes": 0,
+                "total": 574
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 78,
+                "reconfirm_votes": 0,
+                "total": 78
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 15,
+                "reconfirm_votes": 0,
+                "total": 15
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 41,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 40",
+        "vote_type": "관내투표",
+        "valid_votes": 1350,
+        "invalid_votes": 0,
+        "total_votes": 1350,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 450,
+                "reconfirm_votes": 3,
+                "total": 453
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 727,
+                "reconfirm_votes": 21,
+                "total": 748
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 125,
+                "reconfirm_votes": 1,
+                "total": 126
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 11,
+                "reconfirm_votes": 11,
+                "total": 22
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 42,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 41",
+        "vote_type": "관내투표",
+        "valid_votes": 2125,
+        "invalid_votes": 0,
+        "total_votes": 2125,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 577,
+                "reconfirm_votes": 584,
+                "total": 1161
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 673,
+                "reconfirm_votes": 13,
+                "total": 686
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 114,
+                "reconfirm_votes": 115,
+                "total": 229
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 24,
+                "reconfirm_votes": 25,
+                "total": 49
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 43,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 42",
+        "vote_type": "관내투표",
+        "valid_votes": 1134,
+        "invalid_votes": 0,
+        "total_votes": 1134,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 454,
+                "reconfirm_votes": 10,
+                "total": 464
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 545,
+                "reconfirm_votes": 10,
+                "total": 555
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 90,
+                "reconfirm_votes": 11,
+                "total": 101
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 13,
+                "reconfirm_votes": 1,
+                "total": 14
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 44,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 43",
+        "vote_type": "관내투표",
+        "valid_votes": 1213,
+        "invalid_votes": 0,
+        "total_votes": 1213,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 454,
+                "reconfirm_votes": 10,
+                "total": 464
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 546,
+                "reconfirm_votes": 9,
+                "total": 555
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 90,
+                "reconfirm_votes": 90,
+                "total": 180
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 13,
+                "reconfirm_votes": 1,
+                "total": 14
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 45,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 44",
+        "vote_type": "관내투표",
+        "valid_votes": 1988,
+        "invalid_votes": 0,
+        "total_votes": 1988,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 562,
+                "reconfirm_votes": 572,
+                "total": 1134
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 705,
+                "reconfirm_votes": 37,
+                "total": 742
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 101,
+                "reconfirm_votes": 0,
+                "total": 101
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 10,
+                "reconfirm_votes": 1,
+                "total": 11
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 46,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 45",
+        "vote_type": "관내투표",
+        "valid_votes": 1289,
+        "invalid_votes": 0,
+        "total_votes": 1289,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 435,
+                "reconfirm_votes": 10,
+                "total": 445
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 650,
+                "reconfirm_votes": 12,
+                "total": 662
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 78,
+                "reconfirm_votes": 79,
+                "total": 157
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 12,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 47,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 46",
+        "vote_type": "관내투표",
+        "valid_votes": 1028,
+        "invalid_votes": 0,
+        "total_votes": 1028,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 389,
+                "reconfirm_votes": 13,
+                "total": 402
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 496,
+                "reconfirm_votes": 21,
+                "total": 517
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 72,
+                "reconfirm_votes": 3,
+                "total": 75
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 17,
+                "reconfirm_votes": 17,
+                "total": 34
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 48,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 47",
+        "vote_type": "관내투표",
+        "valid_votes": 2034,
+        "invalid_votes": 0,
+        "total_votes": 2034,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 709,
+                "reconfirm_votes": 41,
+                "total": 750
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 902,
+                "reconfirm_votes": 46,
+                "total": 948
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 140,
+                "reconfirm_votes": 147,
+                "total": 287
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 22,
+                "reconfirm_votes": 23,
+                "total": 45
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 49,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 48",
+        "vote_type": "관내투표",
+        "valid_votes": 1692,
+        "invalid_votes": 0,
+        "total_votes": 1692,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 644,
+                "reconfirm_votes": 9,
+                "total": 653
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 853,
+                "reconfirm_votes": 19,
+                "total": 872
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 118,
+                "reconfirm_votes": 3,
+                "total": 121
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 20,
+                "reconfirm_votes": 20,
+                "total": 40
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 50,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 49",
+        "vote_type": "관내투표",
+        "valid_votes": 1679,
+        "invalid_votes": 0,
+        "total_votes": 1679,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 680,
+                "reconfirm_votes": 9,
+                "total": 689
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 796,
+                "reconfirm_votes": 17,
+                "total": 813
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 126,
+                "reconfirm_votes": 1,
+                "total": 127
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 23,
+                "reconfirm_votes": 23,
+                "total": 46
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 51,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 50",
+        "vote_type": "관내투표",
+        "valid_votes": 1804,
+        "invalid_votes": 0,
+        "total_votes": 1804,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 895,
+                "reconfirm_votes": 10,
+                "total": 905
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 716,
+                "reconfirm_votes": 13,
+                "total": 729
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 120,
+                "reconfirm_votes": 0,
+                "total": 120
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 23,
+                "reconfirm_votes": 23,
+                "total": 46
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 52,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 51",
+        "vote_type": "관내투표",
+        "valid_votes": 4053,
+        "invalid_votes": 0,
+        "total_votes": 4053,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 899,
+                "reconfirm_votes": 915,
+                "total": 1814
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1004,
+                "reconfirm_votes": 1023,
+                "total": 2027
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 161,
+                "reconfirm_votes": 0,
+                "total": 161
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 25,
+                "reconfirm_votes": 25,
+                "total": 50
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 53,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 52",
+        "vote_type": "관내투표",
+        "valid_votes": 1060,
+        "invalid_votes": 0,
+        "total_votes": 1060,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 377,
+                "reconfirm_votes": 7,
+                "total": 384
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 540,
+                "reconfirm_votes": 15,
+                "total": 555
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 88,
+                "reconfirm_votes": 1,
+                "total": 89
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 16,
+                "reconfirm_votes": 16,
+                "total": 32
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 54,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 53",
+        "vote_type": "관내투표",
+        "valid_votes": 1456,
+        "invalid_votes": 0,
+        "total_votes": 1456,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 555,
+                "reconfirm_votes": 6,
+                "total": 561
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 732,
+                "reconfirm_votes": 8,
+                "total": 740
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 112,
+                "reconfirm_votes": 3,
+                "total": 115
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 16,
+                "reconfirm_votes": 16,
+                "total": 32
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 4,
+                "total": 8
+            }
+        ]
+    },
+    {
+        "id": 55,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 54",
+        "vote_type": "관내투표",
+        "valid_votes": 2123,
+        "invalid_votes": 0,
+        "total_votes": 2123,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 785,
+                "reconfirm_votes": 8,
+                "total": 793
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1091,
+                "reconfirm_votes": 0,
+                "total": 1091
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 199,
+                "reconfirm_votes": 3,
+                "total": 202
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 32,
+                "reconfirm_votes": 1,
+                "total": 33
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 56,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 55",
+        "vote_type": "관내투표",
+        "valid_votes": 1479,
+        "invalid_votes": 0,
+        "total_votes": 1479,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 511,
+                "reconfirm_votes": 0,
+                "total": 511
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 653,
+                "reconfirm_votes": 16,
+                "total": 669
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 130,
+                "reconfirm_votes": 131,
+                "total": 261
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 17,
+                "reconfirm_votes": 17,
+                "total": 34
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 57,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 56",
+        "vote_type": "관내투표",
+        "valid_votes": 3199,
+        "invalid_votes": 0,
+        "total_votes": 3199,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1242,
+                "reconfirm_votes": 19,
+                "total": 1261
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1566,
+                "reconfirm_votes": 21,
+                "total": 1587
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 277,
+                "reconfirm_votes": 6,
+                "total": 283
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 32,
+                "reconfirm_votes": 32,
+                "total": 64
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 58,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 57",
+        "vote_type": "관내투표",
+        "valid_votes": 2714,
+        "invalid_votes": 0,
+        "total_votes": 2714,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 633,
+                "reconfirm_votes": 644,
+                "total": 1277
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1274,
+                "reconfirm_votes": 22,
+                "total": 1296
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 114,
+                "reconfirm_votes": 0,
+                "total": 114
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 19,
+                "reconfirm_votes": 0,
+                "total": 19
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 4,
+                "total": 8
+            }
+        ]
+    },
+    {
+        "id": 59,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 58",
+        "vote_type": "관내투표",
+        "valid_votes": 2282,
+        "invalid_votes": 0,
+        "total_votes": 2282,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 782,
+                "reconfirm_votes": 2,
+                "total": 784
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1120,
+                "reconfirm_votes": 0,
+                "total": 1120
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 166,
+                "reconfirm_votes": 168,
+                "total": 334
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 22,
+                "reconfirm_votes": 22,
+                "total": 44
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 60,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 59",
+        "vote_type": "관내투표",
+        "valid_votes": 1826,
+        "invalid_votes": 0,
+        "total_votes": 1826,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 713,
+                "reconfirm_votes": 3,
+                "total": 716
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 948,
+                "reconfirm_votes": 0,
+                "total": 948
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 148,
+                "reconfirm_votes": 0,
+                "total": 148
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 14,
+                "reconfirm_votes": 0,
+                "total": 14
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 61,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 60",
+        "vote_type": "관내투표",
+        "valid_votes": 4112,
+        "invalid_votes": 0,
+        "total_votes": 4112,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 890,
+                "reconfirm_votes": 903,
+                "total": 1793
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1008,
+                "reconfirm_votes": 1021,
+                "total": 2029
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 234,
+                "reconfirm_votes": 5,
+                "total": 239
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 25,
+                "reconfirm_votes": 25,
+                "total": 50
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 62,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 61",
+        "vote_type": "관내투표",
+        "valid_votes": 2491,
+        "invalid_votes": 0,
+        "total_votes": 2491,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 655,
+                "reconfirm_votes": 19,
+                "total": 674
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 827,
+                "reconfirm_votes": 840,
+                "total": 1667
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 123,
+                "reconfirm_votes": 2,
+                "total": 125
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 12,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 63,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 62",
+        "vote_type": "관내투표",
+        "valid_votes": 2192,
+        "invalid_votes": 0,
+        "total_votes": 2192,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 830,
+                "reconfirm_votes": 14,
+                "total": 844
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1023,
+                "reconfirm_votes": 20,
+                "total": 1043
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 137,
+                "reconfirm_votes": 137,
+                "total": 274
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 13,
+                "reconfirm_votes": 13,
+                "total": 26
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 5,
+                "reconfirm_votes": 0,
+                "total": 5
+            }
+        ]
+    },
+    {
+        "id": 64,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 63",
+        "vote_type": "관내투표",
+        "valid_votes": 1453,
+        "invalid_votes": 0,
+        "total_votes": 1453,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 669,
+                "reconfirm_votes": 6,
+                "total": 675
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 626,
+                "reconfirm_votes": 7,
+                "total": 633
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 99,
+                "reconfirm_votes": 2,
+                "total": 101
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 19,
+                "reconfirm_votes": 19,
+                "total": 38
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 65,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 64",
+        "vote_type": "관내투표",
+        "valid_votes": 1753,
+        "invalid_votes": 0,
+        "total_votes": 1753,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 796,
+                "reconfirm_votes": 16,
+                "total": 812
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 784,
+                "reconfirm_votes": 17,
+                "total": 801
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 120,
+                "reconfirm_votes": 2,
+                "total": 122
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 11,
+                "reconfirm_votes": 1,
+                "total": 12
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 66,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 65",
+        "vote_type": "관내투표",
+        "valid_votes": 3155,
+        "invalid_votes": 0,
+        "total_votes": 3155,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1273,
+                "reconfirm_votes": 12,
+                "total": 1285
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1577,
+                "reconfirm_votes": 25,
+                "total": 1602
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 197,
+                "reconfirm_votes": 4,
+                "total": 201
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 32,
+                "reconfirm_votes": 32,
+                "total": 64
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 2,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 67,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 66",
+        "vote_type": "관내투표",
+        "valid_votes": 1669,
+        "invalid_votes": 0,
+        "total_votes": 1669,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 708,
+                "reconfirm_votes": 20,
+                "total": 728
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 773,
+                "reconfirm_votes": 19,
+                "total": 792
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 114,
+                "reconfirm_votes": 1,
+                "total": 115
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 15,
+                "reconfirm_votes": 15,
+                "total": 30
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 68,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 67",
+        "vote_type": "관내투표",
+        "valid_votes": 1549,
+        "invalid_votes": 0,
+        "total_votes": 1549,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 565,
+                "reconfirm_votes": 13,
+                "total": 578
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 816,
+                "reconfirm_votes": 10,
+                "total": 826
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 105,
+                "reconfirm_votes": 2,
+                "total": 107
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 17,
+                "reconfirm_votes": 17,
+                "total": 34
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 69,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 68",
+        "vote_type": "관내투표",
+        "valid_votes": 2886,
+        "invalid_votes": 0,
+        "total_votes": 2886,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 385,
+                "reconfirm_votes": 394,
+                "total": 779
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 962,
+                "reconfirm_votes": 979,
+                "total": 1941
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 76,
+                "reconfirm_votes": 78,
+                "total": 154
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 6,
+                "reconfirm_votes": 6,
+                "total": 12
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 70,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 69",
+        "vote_type": "관내투표",
+        "valid_votes": 2902,
+        "invalid_votes": 0,
+        "total_votes": 2902,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 839,
+                "reconfirm_votes": 6,
+                "total": 845
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 883,
+                "reconfirm_votes": 907,
+                "total": 1790
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 123,
+                "reconfirm_votes": 127,
+                "total": 250
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 17,
+                "reconfirm_votes": 0,
+                "total": 17
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 71,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 70",
+        "vote_type": "관내투표",
+        "valid_votes": 2194,
+        "invalid_votes": 0,
+        "total_votes": 2194,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 964,
+                "reconfirm_votes": 3,
+                "total": 967
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 996,
+                "reconfirm_votes": 18,
+                "total": 1014
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 171,
+                "reconfirm_votes": 3,
+                "total": 174
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 19,
+                "reconfirm_votes": 19,
+                "total": 38
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 72,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 71",
+        "vote_type": "관내투표",
+        "valid_votes": 5551,
+        "invalid_votes": 0,
+        "total_votes": 5551,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 3661,
+                "reconfirm_votes": 73,
+                "total": 3734
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1344,
+                "reconfirm_votes": 39,
+                "total": 1383
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 341,
+                "reconfirm_votes": 5,
+                "total": 346
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 36,
+                "reconfirm_votes": 38,
+                "total": 74
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 7,
+                "reconfirm_votes": 7,
+                "total": 14
+            }
+        ]
+    },
+    {
+        "id": 73,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 72",
+        "vote_type": "관내투표",
+        "valid_votes": 3650,
+        "invalid_votes": 0,
+        "total_votes": 3650,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 2417,
+                "reconfirm_votes": 37,
+                "total": 2454
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 864,
+                "reconfirm_votes": 23,
+                "total": 887
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 234,
+                "reconfirm_votes": 3,
+                "total": 237
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 34,
+                "reconfirm_votes": 34,
+                "total": 68
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 74,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 73",
+        "vote_type": "관내투표",
+        "valid_votes": 6001,
+        "invalid_votes": 0,
+        "total_votes": 6001,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 4255,
+                "reconfirm_votes": 61,
+                "total": 4316
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1158,
+                "reconfirm_votes": 20,
+                "total": 1178
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 433,
+                "reconfirm_votes": 8,
+                "total": 441
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 60,
+                "reconfirm_votes": 0,
+                "total": 60
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 6,
+                "reconfirm_votes": 0,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 75,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 74",
+        "vote_type": "관내투표",
+        "valid_votes": 5995,
+        "invalid_votes": 0,
+        "total_votes": 5995,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 4147,
+                "reconfirm_votes": 40,
+                "total": 4187
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1309,
+                "reconfirm_votes": 20,
+                "total": 1329
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 402,
+                "reconfirm_votes": 7,
+                "total": 409
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 55,
+                "reconfirm_votes": 4,
+                "total": 59
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 5,
+                "reconfirm_votes": 6,
+                "total": 11
+            }
+        ]
+    },
+    {
+        "id": 76,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 75",
+        "vote_type": "관내투표",
+        "valid_votes": 4004,
+        "invalid_votes": 0,
+        "total_votes": 4004,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 2815,
+                "reconfirm_votes": 37,
+                "total": 2852
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 799,
+                "reconfirm_votes": 13,
+                "total": 812
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 233,
+                "reconfirm_votes": 34,
+                "total": 267
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 35,
+                "reconfirm_votes": 35,
+                "total": 70
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 2,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 77,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 76",
+        "vote_type": "관내투표",
+        "valid_votes": 5737,
+        "invalid_votes": 0,
+        "total_votes": 5737,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 3913,
+                "reconfirm_votes": 56,
+                "total": 3969
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1262,
+                "reconfirm_votes": 29,
+                "total": 1291
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 414,
+                "reconfirm_votes": 8,
+                "total": 422
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 52,
+                "reconfirm_votes": 1,
+                "total": 53
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 78,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 77",
+        "vote_type": "관내투표",
+        "valid_votes": 4935,
+        "invalid_votes": 0,
+        "total_votes": 4935,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 3351,
+                "reconfirm_votes": 47,
+                "total": 3398
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1078,
+                "reconfirm_votes": 23,
+                "total": 1101
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 339,
+                "reconfirm_votes": 7,
+                "total": 346
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 45,
+                "reconfirm_votes": 45,
+                "total": 90
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 79,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 78",
+        "vote_type": "관내투표",
+        "valid_votes": 5689,
+        "invalid_votes": 0,
+        "total_votes": 5689,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 3866,
+                "reconfirm_votes": 37,
+                "total": 3903
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1165,
+                "reconfirm_votes": 22,
+                "total": 1187
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 424,
+                "reconfirm_votes": 5,
+                "total": 429
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 83,
+                "reconfirm_votes": 83,
+                "total": 166
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 80,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 79",
+        "vote_type": "관내투표",
+        "valid_votes": 3705,
+        "invalid_votes": 0,
+        "total_votes": 3705,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 2561,
+                "reconfirm_votes": 37,
+                "total": 2598
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 805,
+                "reconfirm_votes": 27,
+                "total": 832
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 245,
+                "reconfirm_votes": 2,
+                "total": 247
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 26,
+                "reconfirm_votes": 0,
+                "total": 26
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 0,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 81,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 80",
+        "vote_type": "관내투표",
+        "valid_votes": 8003,
+        "invalid_votes": 0,
+        "total_votes": 8003,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 3403,
+                "reconfirm_votes": 3332,
+                "total": 6735
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 981,
+                "reconfirm_votes": 0,
+                "total": 981
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 241,
+                "reconfirm_votes": 1,
+                "total": 242
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 22,
+                "reconfirm_votes": 22,
+                "total": 44
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 82,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 81",
+        "vote_type": "관내투표",
+        "valid_votes": 4154,
+        "invalid_votes": 0,
+        "total_votes": 4154,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 2764,
+                "reconfirm_votes": 47,
+                "total": 2811
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 976,
+                "reconfirm_votes": 29,
+                "total": 1005
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 243,
+                "reconfirm_votes": 5,
+                "total": 248
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 39,
+                "reconfirm_votes": 39,
+                "total": 78
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 6,
+                "reconfirm_votes": 6,
+                "total": 12
+            }
+        ]
+    },
+    {
+        "id": 83,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 82",
+        "vote_type": "관내투표",
+        "valid_votes": 26428,
+        "invalid_votes": 0,
+        "total_votes": 26428,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 15862,
+                "reconfirm_votes": 534,
+                "total": 16396
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 6081,
+                "reconfirm_votes": 243,
+                "total": 6324
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 3283,
+                "reconfirm_votes": 101,
+                "total": 3384
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 292,
+                "reconfirm_votes": 6,
+                "total": 298
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 24,
+                "reconfirm_votes": 2,
+                "total": 26
+            }
+        ]
+    },
+    {
+        "id": 84,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 83",
+        "vote_type": "관내투표",
+        "valid_votes": 2,
+        "invalid_votes": 0,
+        "total_votes": 2,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 85,
+        "voting_place": "경기도고양시일산서구개표상황표(39133)",
+        "district_name": "경기도고양시일산서구개표상황표(39133) - 투표구 84",
+        "vote_type": "관내투표",
+        "valid_votes": 1819,
+        "invalid_votes": 0,
+        "total_votes": 1819,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1139,
+                "reconfirm_votes": 73,
+                "total": 1212
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 336,
+                "reconfirm_votes": 28,
+                "total": 364
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 178,
+                "reconfirm_votes": 7,
+                "total": 185
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 28,
+                "reconfirm_votes": 29,
+                "total": 57
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    }
+];
+
+        const CANDIDATES = [
+            { name: '이재명', color: '#E74C3C' },
+            { name: '김문수', color: '#3498DB' },
+            { name: '이준석', color: '#2ECC71' },
+            { name: '권영국', color: '#F39C12' },
+            { name: '송진호', color: '#9B59B6' }
+        ];
+
+        function Dashboard() {
+            const [selectedCandidates, setSelectedCandidates] = useState(
+                CANDIDATES.map(c => c.name)
+            );
+
+            // Calculate candidate totals
+            const candidateTotals = useMemo(() => {
+                const totals = {};
+                CANDIDATES.forEach(c => {
+                    totals[c.name] = {
+                        sorted: 0,
+                        reconfirm: 0,
+                        total: 0
+                    };
+                });
+
+                VOTING_DATA.forEach(district => {
+                    district.candidates.forEach(cand => {
+                        if (totals[cand.name]) {
+                            totals[cand.name].sorted += cand.sorted_votes;
+                            totals[cand.name].reconfirm += cand.reconfirm_votes;
+                            totals[cand.name].total += cand.total;
+                        }
+                    });
+                });
+
+                return totals;
+            }, []);
+
+            const toggleCandidate = (name) => {
+                setSelectedCandidates(prev =>
+                    prev.includes(name)
+                        ? prev.filter(c => c !== name)
+                        : [...prev, name]
+                );
+            };
+
+            const selectAll = () => {
+                setSelectedCandidates(CANDIDATES.map(c => c.name));
+            };
+
+            const clearAll = () => {
+                setSelectedCandidates([]);
+            };
+
+            const exportCSV = () => {
+                if (selectedCandidates.length === 0) {
+                    alert('선택된 후보자가 없습니다.');
+                    return;
+                }
+
+                let csv = '투표구,유형,유효투표,무효투표,전체투표';
+                selectedCandidates.forEach(name => {
+                    csv += `,${name}_분류,${name}_재확인,${name}_계`;
+                });
+                csv += '\n';
+
+                VOTING_DATA.forEach(district => {
+                    csv += `"${district.district_name}","${district.vote_type}",${district.valid_votes},${district.invalid_votes},${district.total_votes}`;
+
+                    selectedCandidates.forEach(name => {
+                        const cand = district.candidates.find(c => c.name === name);
+                        if (cand) {
+                            csv += `,${cand.sorted_votes},${cand.reconfirm_votes},${cand.total}`;
+                        } else {
+                            csv += ',0,0,0';
+                        }
+                    });
+
+                    csv += '\n';
+                });
+
+                // Add totals row
+                const totalValid = VOTING_DATA.reduce((sum, d) => sum + d.valid_votes, 0);
+                const totalInvalid = VOTING_DATA.reduce((sum, d) => sum + d.invalid_votes, 0);
+                const totalAll = totalValid + totalInvalid;
+
+                csv += `"합계","전체",${totalValid},${totalInvalid},${totalAll}`;
+
+                selectedCandidates.forEach(name => {
+                    const totals = candidateTotals[name];
+                    csv += `,${totals.sorted},${totals.reconfirm},${totals.total}`;
+                });
+
+                const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `경기도고양시일산서구개표상황표(39133)_개표상황_${selectedCandidates.length}명_${new Date().toISOString().split('T')[0]}.csv`;
+                link.click();
+            };
+
+            return (
+                <div className="dashboard">
+                    <div className="header">
+                        <h1>경기도고양시일산서구개표상황표(39133) 개표상황표 분석 대시보드</h1>
+                        <div className="subtitle">제21대 대통령선거 투표 심사·집계 분석</div>
+                    </div>
+
+                    <CandidateFilter
+                        selectedCandidates={selectedCandidates}
+                        candidateTotals={candidateTotals}
+                        onToggle={toggleCandidate}
+                        onSelectAll={selectAll}
+                        onClearAll={clearAll}
+                    />
+
+                    <div className="charts-grid">
+                        <ValidInvalidChart data={VOTING_DATA} />
+                        <ReliabilityChart
+                            candidateTotals={candidateTotals}
+                            selectedCandidates={selectedCandidates}
+                        />
+                    </div>
+
+                    <DataTable
+                        data={VOTING_DATA}
+                        selectedCandidates={selectedCandidates}
+                        candidateTotals={candidateTotals}
+                        onExport={exportCSV}
+                    />
+                </div>
+            );
+        }
+
+        function CandidateFilter({
+            selectedCandidates,
+            candidateTotals,
+            onToggle,
+            onSelectAll,
+            onClearAll
+        }) {
+            return (
+                <div className="filter-section">
+                    <div className="filter-header">
+                        <div className="filter-title">후보자 필터</div>
+                        <div className="button-group">
+                            <button className="btn btn-primary" onClick={onSelectAll}>
+                                전체선택
+                            </button>
+                            <button className="btn btn-secondary" onClick={onClearAll}>
+                                전체해제
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="candidates-grid">
+                        {CANDIDATES.map(candidate => {
+                            const isSelected = selectedCandidates.includes(candidate.name);
+                            const totals = candidateTotals[candidate.name];
+
+                            return (
+                                <div
+                                    key={candidate.name}
+                                    className={`candidate-checkbox ${isSelected ? 'selected' : ''}`}
+                                    onClick={() => onToggle(candidate.name)}
+                                    style={{
+                                        borderColor: isSelected ? candidate.color : undefined
+                                    }}
+                                >
+                                    <input type="checkbox" checked={isSelected} readOnly />
+                                    <div
+                                        className="candidate-name"
+                                        style={{ color: candidate.color }}
+                                    >
+                                        {candidate.name}
+                                    </div>
+                                    <div className="candidate-stats">
+                                        <div>분류된표: {totals.sorted.toLocaleString()}</div>
+                                        <div>재검표수: {totals.reconfirm.toLocaleString()}</div>
+                                        <div>계: {totals.total.toLocaleString()}</div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="selection-info">
+                        {selectedCandidates.length}명의 후보자 선택됨
+                    </div>
+                </div>
+            );
+        }
+
+        function ValidInvalidChart({ data }) {
+            const canvasRef = React.useRef(null);
+            const chartRef = React.useRef(null);
+
+            useEffect(() => {
+                if (!canvasRef.current) return;
+
+                // Group by voting place
+                const placeData = {};
+                data.forEach(district => {
+                    if (!placeData[district.voting_place]) {
+                        placeData[district.voting_place] = {
+                            valid: 0,
+                            invalid: 0
+                        };
+                    }
+                    placeData[district.voting_place].valid += district.valid_votes;
+                    placeData[district.voting_place].invalid += district.invalid_votes;
+                });
+
+                const labels = Object.keys(placeData);
+                const validData = labels.map(label => placeData[label].valid);
+                const invalidData = labels.map(label => placeData[label].invalid);
+
+                if (chartRef.current) {
+                    chartRef.current.destroy();
+                }
+
+                const ctx = canvasRef.current.getContext('2d');
+                chartRef.current = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: '유효투표',
+                                data: validData,
+                                backgroundColor: 'rgba(79, 158, 255, 0.8)',
+                                borderColor: 'rgba(79, 158, 255, 1)',
+                                borderWidth: 2
+                            },
+                            {
+                                label: '무효투표',
+                                data: invalidData,
+                                backgroundColor: 'rgba(255, 107, 107, 0.8)',
+                                borderColor: 'rgba(255, 107, 107, 1)',
+                                borderWidth: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#e8eaf0',
+                                    font: {
+                                        family: "'Noto Sans KR', sans-serif",
+                                        size: 12
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(26, 31, 58, 0.95)',
+                                titleColor: '#e8eaf0',
+                                bodyColor: '#a0a8c0',
+                                borderColor: '#2a3150',
+                                borderWidth: 1,
+                                padding: 12,
+                                titleFont: {
+                                    family: "'Noto Sans KR', sans-serif"
+                                },
+                                bodyFont: {
+                                    family: "'JetBrains Mono', monospace"
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    color: 'rgba(42, 49, 80, 0.5)'
+                                },
+                                ticks: {
+                                    color: '#a0a8c0',
+                                    font: {
+                                        family: "'Noto Sans KR', sans-serif"
+                                    }
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    color: 'rgba(42, 49, 80, 0.5)'
+                                },
+                                ticks: {
+                                    color: '#a0a8c0',
+                                    font: {
+                                        family: "'JetBrains Mono', monospace"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                return () => {
+                    if (chartRef.current) {
+                        chartRef.current.destroy();
+                    }
+                };
+            }, [data]);
+
+            return (
+                <div className="chart-card">
+                    <div className="chart-title">투표구별 유효/무효 투표 현황</div>
+                    <div className="chart-container">
+                        <canvas ref={canvasRef}></canvas>
+                    </div>
+                </div>
+            );
+        }
+
+        function ReliabilityChart({ candidateTotals, selectedCandidates }) {
+            return (
+                <div className="chart-card">
+                    <div className="chart-title">후보자별 득표 신뢰도 분석</div>
+                    <div className="chart-container">
+                        <div className="reliability-bars">
+                            {CANDIDATES.filter(c => selectedCandidates.includes(c.name)).map(candidate => {
+                                const totals = candidateTotals[candidate.name];
+                                const sortedRate = totals.total > 0 ? (totals.sorted / totals.total * 100).toFixed(1) : "0.0";
+                                const reconfirmRate = totals.total > 0 ? (totals.reconfirm / totals.total * 100).toFixed(1) : "0.0";
+
+                                return (
+                                    <div key={candidate.name} className="reliability-item">
+                                        <div className="reliability-header">
+                                            <div className="reliability-name" style={{ color: candidate.color }}>
+                                                {candidate.name}
+                                            </div>
+                                            <div className="reliability-stats">
+                                                분류: {sortedRate}% | 재확인: {reconfirmRate}%
+                                            </div>
+                                        </div>
+                                        <div className="reliability-bar-container">
+                                            <div
+                                                className="reliability-bar"
+                                                style={{
+                                                    width: `${sortedRate}%`,
+                                                    background: `linear-gradient(90deg, ${candidate.color}, ${candidate.color}dd)`
+                                                }}
+                                            >
+                                                {sortedRate}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        {selectedCandidates.length === 0 && (
+                            <div className="empty-state">
+                                <div className="empty-icon">📊</div>
+                                <div className="empty-message">선택된 후보자가 없습니다</div>
+                                <div className="empty-hint">위에서 후보자를 선택해주세요</div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function DataTable({ data, selectedCandidates, candidateTotals, onExport }) {
+            const totals = useMemo(() => {
+                return {
+                    valid: data.reduce((sum, d) => sum + d.valid_votes, 0),
+                    invalid: data.reduce((sum, d) => sum + d.invalid_votes, 0),
+                    total: data.reduce((sum, d) => sum + d.total_votes, 0)
+                };
+            }, [data]);
+
+            return (
+                <div className="table-container">
+                    <div className="table-header">
+                        <div className="chart-title">상세 심사·집계표</div>
+                        <button
+                            className="btn btn-export"
+                            onClick={onExport}
+                            disabled={selectedCandidates.length === 0}
+                        >
+                            📥 CSV 내보내기
+                        </button>
+                    </div>
+
+                    {selectedCandidates.length === 0 ? (
+                        <div className="empty-state">
+                            <div className="empty-icon">📋</div>
+                            <div className="empty-message">선택된 후보자가 없습니다</div>
+                            <div className="empty-hint">후보자를 선택하면 상세 데이터를 확인할 수 있습니다</div>
+                        </div>
+                    ) : (
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th rowSpan="2">투표구</th>
+                                    <th rowSpan="2">유형</th>
+                                    <th rowSpan="2">유효투표</th>
+                                    <th rowSpan="2">무효투표</th>
+                                    <th rowSpan="2">전체투표</th>
+                                    {selectedCandidates.map(name => (
+                                        <th
+                                            key={name}
+                                            colSpan="3"
+                                            className="candidate-header"
+                                            style={{ color: CANDIDATES.find(c => c.name === name)?.color }}
+                                        >
+                                            {name}
+                                        </th>
+                                    ))}
+                                </tr>
+                                <tr>
+                                    {selectedCandidates.map(name => (
+                                        <React.Fragment key={name}>
+                                            <th className="subheader">분류</th>
+                                            <th className="subheader">재확인</th>
+                                            <th className="subheader">계</th>
+                                        </React.Fragment>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data.map((district, idx) => (
+                                    <tr key={idx}>
+                                        <td>{district.district_name}</td>
+                                        <td>{district.vote_type}</td>
+                                        <td className="number">{district.valid_votes.toLocaleString()}</td>
+                                        <td className="number">{district.invalid_votes.toLocaleString()}</td>
+                                        <td className="number">{district.total_votes.toLocaleString()}</td>
+                                        {selectedCandidates.map(name => {
+                                            const cand = district.candidates.find(c => c.name === name);
+                                            return (
+                                                <React.Fragment key={name}>
+                                                    <td className="candidate-cell number">
+                                                        {cand ? cand.sorted_votes.toLocaleString() : '0'}
+                                                    </td>
+                                                    <td className="candidate-cell number">
+                                                        {cand ? cand.reconfirm_votes.toLocaleString() : '0'}
+                                                    </td>
+                                                    <td className="candidate-cell number">
+                                                        {cand ? cand.total.toLocaleString() : '0'}
+                                                    </td>
+                                                </React.Fragment>
+                                            );
+                                        })}
+                                    </tr>
+                                ))}
+                                <tr className="totals-row">
+                                    <td colSpan="2">합계</td>
+                                    <td className="number">{totals.valid.toLocaleString()}</td>
+                                    <td className="number">{totals.invalid.toLocaleString()}</td>
+                                    <td className="number">{totals.total.toLocaleString()}</td>
+                                    {selectedCandidates.map(name => {
+                                        const t = candidateTotals[name];
+                                        return (
+                                            <React.Fragment key={name}>
+                                                <td className="candidate-cell number">{t.sorted.toLocaleString()}</td>
+                                                <td className="candidate-cell number">{t.reconfirm.toLocaleString()}</td>
+                                                <td className="candidate-cell number">{t.total.toLocaleString()}</td>
+                                            </React.Fragment>
+                                        );
+                                    })}
+                                </tr>
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<Dashboard />);
+    </script>
+</body>
+
+</html>

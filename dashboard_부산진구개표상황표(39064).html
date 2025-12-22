@@ -1,0 +1,6236 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>부산진구개표상황표(39064) 개표상황표 분석 대시보드</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #141932;
+            --bg-card: #1a1f3a;
+            --text-primary: #e8eaf0;
+            --text-secondary: #a0a8c0;
+            --accent-blue: #4f9eff;
+            --accent-cyan: #00d4ff;
+            --border-color: #2a3150;
+            --success: #00e676;
+            --warning: #ffab00;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem;
+            background-attachment: fixed;
+        }
+
+        .dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border-color);
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 300;
+        }
+
+        .filter-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .filter-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(79, 158, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .btn-export {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 230, 118, 0.4);
+        }
+
+        .candidates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .candidate-checkbox {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .candidate-checkbox:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(79, 158, 255, 0.2);
+        }
+
+        .candidate-checkbox.selected {
+            border-width: 2px;
+            background: linear-gradient(135deg, rgba(79, 158, 255, 0.1), rgba(0, 212, 255, 0.1));
+        }
+
+        .candidate-checkbox.selected::before {
+            content: '✓';
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 28px;
+            height: 28px;
+            background: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .candidate-checkbox input {
+            display: none;
+        }
+
+        .candidate-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .candidate-stats {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .candidate-stats div {
+            margin-top: 0.3rem;
+        }
+
+        .selection-info {
+            text-align: center;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(79, 158, 255, 0.1);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--accent-cyan);
+        }
+
+        .chart-container {
+            height: 400px;
+            position: relative;
+        }
+
+        .reliability-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .reliability-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .reliability-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .reliability-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .reliability-stats {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .reliability-bar-container {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            height: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .reliability-bar {
+            height: 100%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            padding: 0 0.8rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: white;
+            position: relative;
+        }
+
+        .reliability-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .table-container {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow-x: auto;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.9rem;
+        }
+
+        thead {
+            background: var(--bg-secondary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 1rem 0.8rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        th.candidate-header {
+            background: var(--bg-secondary);
+            text-align: center;
+            border-left: 1px solid var(--border-color);
+        }
+
+        th.subheader {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            padding: 0.6rem 0.5rem;
+        }
+
+        tbody tr {
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: rgba(79, 158, 255, 0.05);
+        }
+
+        tbody tr.totals-row {
+            background: linear-gradient(135deg, rgba(79, 158, 255, 0.15), rgba(0, 212, 255, 0.15));
+            font-weight: 700;
+        }
+
+        td {
+            padding: 0.9rem 0.8rem;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        td.number {
+            font-family: 'JetBrains Mono', monospace;
+            text-align: right;
+        }
+
+        td.candidate-cell {
+            border-left: 1px solid var(--border-color);
+            text-align: right;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-message {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-hint {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .candidates-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .button-group {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // Sample data embedded
+        const VOTING_DATA = [
+    {
+        "id": 2,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 1",
+        "vote_type": "관내투표",
+        "valid_votes": 596,
+        "invalid_votes": 0,
+        "total_votes": 596,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 225,
+                "reconfirm_votes": 0,
+                "total": 225
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 247,
+                "reconfirm_votes": 0,
+                "total": 247
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 116,
+                "reconfirm_votes": 0,
+                "total": 116
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 5,
+                "reconfirm_votes": 0,
+                "total": 5
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 0,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 3,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 2",
+        "vote_type": "관내투표",
+        "valid_votes": 29242,
+        "invalid_votes": 0,
+        "total_votes": 29242,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 15552,
+                "reconfirm_votes": 0,
+                "total": 15552
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 9153,
+                "reconfirm_votes": 297,
+                "total": 9450
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 3761,
+                "reconfirm_votes": 94,
+                "total": 3855
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 336,
+                "reconfirm_votes": 9,
+                "total": 345
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 37,
+                "reconfirm_votes": 3,
+                "total": 40
+            }
+        ]
+    },
+    {
+        "id": 4,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 3",
+        "vote_type": "관내투표",
+        "valid_votes": 1135,
+        "invalid_votes": 0,
+        "total_votes": 1135,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 762,
+                "reconfirm_votes": 11,
+                "total": 773
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 207,
+                "reconfirm_votes": 7,
+                "total": 214
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 103,
+                "reconfirm_votes": 2,
+                "total": 105
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 21,
+                "reconfirm_votes": 21,
+                "total": 42
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 5,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 4",
+        "vote_type": "관내투표",
+        "valid_votes": 3741,
+        "invalid_votes": 0,
+        "total_votes": 3741,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1957,
+                "reconfirm_votes": 30,
+                "total": 1987
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1398,
+                "reconfirm_votes": 42,
+                "total": 1440
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 275,
+                "reconfirm_votes": 6,
+                "total": 281
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 24,
+                "reconfirm_votes": 1,
+                "total": 25
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 4,
+                "total": 8
+            }
+        ]
+    },
+    {
+        "id": 6,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 5",
+        "vote_type": "관내투표",
+        "valid_votes": 1539,
+        "invalid_votes": 0,
+        "total_votes": 1539,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 306,
+                "reconfirm_votes": 8,
+                "total": 314
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 914,
+                "reconfirm_votes": 28,
+                "total": 942
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 110,
+                "reconfirm_votes": 2,
+                "total": 112
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 9,
+                "reconfirm_votes": 9,
+                "total": 18
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 150,
+                "total": 153
+            }
+        ]
+    },
+    {
+        "id": 7,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 6",
+        "vote_type": "관내투표",
+        "valid_votes": 2399,
+        "invalid_votes": 0,
+        "total_votes": 2399,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 619,
+                "reconfirm_votes": 14,
+                "total": 633
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1382,
+                "reconfirm_votes": 38,
+                "total": 1420
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 282,
+                "reconfirm_votes": 6,
+                "total": 288
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 24,
+                "reconfirm_votes": 24,
+                "total": 48
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 5,
+                "reconfirm_votes": 5,
+                "total": 10
+            }
+        ]
+    },
+    {
+        "id": 8,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 7",
+        "vote_type": "관내투표",
+        "valid_votes": 1727,
+        "invalid_votes": 0,
+        "total_votes": 1727,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 448,
+                "reconfirm_votes": 12,
+                "total": 460
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1061,
+                "reconfirm_votes": 0,
+                "total": 1061
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 181,
+                "reconfirm_votes": 3,
+                "total": 184
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 9,
+                "reconfirm_votes": 9,
+                "total": 18
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 9,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 8",
+        "vote_type": "관내투표",
+        "valid_votes": 2411,
+        "invalid_votes": 0,
+        "total_votes": 2411,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1329,
+                "reconfirm_votes": 20,
+                "total": 1349
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 680,
+                "reconfirm_votes": 28,
+                "total": 708
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 314,
+                "reconfirm_votes": 4,
+                "total": 318
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 19,
+                "reconfirm_votes": 1,
+                "total": 20
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 8,
+                "reconfirm_votes": 8,
+                "total": 16
+            }
+        ]
+    },
+    {
+        "id": 10,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 9",
+        "vote_type": "관내투표",
+        "valid_votes": 2033,
+        "invalid_votes": 0,
+        "total_votes": 2033,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 491,
+                "reconfirm_votes": 6,
+                "total": 497
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1139,
+                "reconfirm_votes": 21,
+                "total": 1160
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 178,
+                "reconfirm_votes": 178,
+                "total": 356
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 18,
+                "reconfirm_votes": 1,
+                "total": 19
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 11,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 10",
+        "vote_type": "관내투표",
+        "valid_votes": 1205,
+        "invalid_votes": 0,
+        "total_votes": 1205,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 247,
+                "reconfirm_votes": 5,
+                "total": 252
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 677,
+                "reconfirm_votes": 0,
+                "total": 677
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 188,
+                "reconfirm_votes": 66,
+                "total": 254
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 11,
+                "reconfirm_votes": 11,
+                "total": 22
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 12,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 11",
+        "vote_type": "관내투표",
+        "valid_votes": 2027,
+        "invalid_votes": 0,
+        "total_votes": 2027,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 528,
+                "reconfirm_votes": 5,
+                "total": 533
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1335,
+                "reconfirm_votes": 20,
+                "total": 1355
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 125,
+                "reconfirm_votes": 2,
+                "total": 127
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 6,
+                "reconfirm_votes": 6,
+                "total": 12
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 13,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 12",
+        "vote_type": "관내투표",
+        "valid_votes": 4530,
+        "invalid_votes": 0,
+        "total_votes": 4530,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 2596,
+                "reconfirm_votes": 41,
+                "total": 2637
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1449,
+                "reconfirm_votes": 56,
+                "total": 1505
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 282,
+                "reconfirm_votes": 8,
+                "total": 290
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 47,
+                "reconfirm_votes": 47,
+                "total": 94
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 1,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 14,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 13",
+        "vote_type": "관내투표",
+        "valid_votes": 1993,
+        "invalid_votes": 0,
+        "total_votes": 1993,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 719,
+                "reconfirm_votes": 8,
+                "total": 727
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1111,
+                "reconfirm_votes": 0,
+                "total": 1111
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 118,
+                "reconfirm_votes": 1,
+                "total": 119
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 17,
+                "reconfirm_votes": 17,
+                "total": 34
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 15,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 14",
+        "vote_type": "관내투표",
+        "valid_votes": 1535,
+        "invalid_votes": 0,
+        "total_votes": 1535,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 342,
+                "reconfirm_votes": 6,
+                "total": 348
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1047,
+                "reconfirm_votes": 25,
+                "total": 1072
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 87,
+                "reconfirm_votes": 2,
+                "total": 89
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 13,
+                "reconfirm_votes": 13,
+                "total": 26
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 16,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 15",
+        "vote_type": "관내투표",
+        "valid_votes": 1196,
+        "invalid_votes": 0,
+        "total_votes": 1196,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 233,
+                "reconfirm_votes": 0,
+                "total": 233
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 811,
+                "reconfirm_votes": 28,
+                "total": 839
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 51,
+                "reconfirm_votes": 51,
+                "total": 102
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 9,
+                "reconfirm_votes": 9,
+                "total": 18
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 17,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 16",
+        "vote_type": "관내투표",
+        "valid_votes": 1906,
+        "invalid_votes": 0,
+        "total_votes": 1906,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 471,
+                "reconfirm_votes": 12,
+                "total": 483
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1106,
+                "reconfirm_votes": 54,
+                "total": 1160
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 110,
+                "reconfirm_votes": 110,
+                "total": 220
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 21,
+                "reconfirm_votes": 21,
+                "total": 42
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 18,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 17",
+        "vote_type": "관내투표",
+        "valid_votes": 1703,
+        "invalid_votes": 0,
+        "total_votes": 1703,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 503,
+                "reconfirm_votes": 9,
+                "total": 512
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1021,
+                "reconfirm_votes": 34,
+                "total": 1055
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 105,
+                "reconfirm_votes": 1,
+                "total": 106
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 12,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 19,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 18",
+        "vote_type": "관내투표",
+        "valid_votes": 2686,
+        "invalid_votes": 0,
+        "total_votes": 2686,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 912,
+                "reconfirm_votes": 6,
+                "total": 918
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1485,
+                "reconfirm_votes": 20,
+                "total": 1505
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 213,
+                "reconfirm_votes": 2,
+                "total": 215
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 22,
+                "reconfirm_votes": 22,
+                "total": 44
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 20,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 19",
+        "vote_type": "관내투표",
+        "valid_votes": 4408,
+        "invalid_votes": 0,
+        "total_votes": 4408,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 2270,
+                "reconfirm_votes": 45,
+                "total": 2315
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1504,
+                "reconfirm_votes": 53,
+                "total": 1557
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 223,
+                "reconfirm_votes": 6,
+                "total": 229
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 27,
+                "reconfirm_votes": 275,
+                "total": 302
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 2,
+                "total": 5
+            }
+        ]
+    },
+    {
+        "id": 21,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 20",
+        "vote_type": "관내투표",
+        "valid_votes": 2168,
+        "invalid_votes": 0,
+        "total_votes": 2168,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 714,
+                "reconfirm_votes": 3,
+                "total": 717
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1263,
+                "reconfirm_votes": 26,
+                "total": 1289
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 129,
+                "reconfirm_votes": 2,
+                "total": 131
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 15,
+                "reconfirm_votes": 15,
+                "total": 30
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 22,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 21",
+        "vote_type": "관내투표",
+        "valid_votes": 1629,
+        "invalid_votes": 0,
+        "total_votes": 1629,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 332,
+                "reconfirm_votes": 7,
+                "total": 339
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1144,
+                "reconfirm_votes": 30,
+                "total": 1174
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 52,
+                "reconfirm_votes": 52,
+                "total": 104
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 5,
+                "reconfirm_votes": 5,
+                "total": 10
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 23,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 22",
+        "vote_type": "관내투표",
+        "valid_votes": 1175,
+        "invalid_votes": 0,
+        "total_votes": 1175,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 186,
+                "reconfirm_votes": 197,
+                "total": 383
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 718,
+                "reconfirm_votes": 34,
+                "total": 752
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 30,
+                "reconfirm_votes": 4,
+                "total": 34
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 24,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 23",
+        "vote_type": "관내투표",
+        "valid_votes": 1105,
+        "invalid_votes": 0,
+        "total_votes": 1105,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 271,
+                "reconfirm_votes": 9,
+                "total": 280
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 725,
+                "reconfirm_votes": 27,
+                "total": 752
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 56,
+                "reconfirm_votes": 1,
+                "total": 57
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 8,
+                "reconfirm_votes": 8,
+                "total": 16
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 25,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 24",
+        "vote_type": "관내투표",
+        "valid_votes": 1563,
+        "invalid_votes": 0,
+        "total_votes": 1563,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 455,
+                "reconfirm_votes": 4,
+                "total": 459
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 958,
+                "reconfirm_votes": 24,
+                "total": 982
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 84,
+                "reconfirm_votes": 3,
+                "total": 87
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 15,
+                "reconfirm_votes": 15,
+                "total": 30
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 3,
+                "total": 5
+            }
+        ]
+    },
+    {
+        "id": 26,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 25",
+        "vote_type": "관내투표",
+        "valid_votes": 2133,
+        "invalid_votes": 0,
+        "total_votes": 2133,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 575,
+                "reconfirm_votes": 4,
+                "total": 579
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1240,
+                "reconfirm_votes": 41,
+                "total": 1281
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 131,
+                "reconfirm_votes": 132,
+                "total": 263
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 9,
+                "reconfirm_votes": 0,
+                "total": 9
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 27,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 26",
+        "vote_type": "관내투표",
+        "valid_votes": 6021,
+        "invalid_votes": 0,
+        "total_votes": 6021,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 2434,
+                "reconfirm_votes": 36,
+                "total": 2470
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1413,
+                "reconfirm_votes": 1440,
+                "total": 2853
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 334,
+                "reconfirm_votes": 336,
+                "total": 670
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 26,
+                "reconfirm_votes": 0,
+                "total": 26
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 0,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 28,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 27",
+        "vote_type": "관내투표",
+        "valid_votes": 955,
+        "invalid_votes": 0,
+        "total_votes": 955,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 243,
+                "reconfirm_votes": 3,
+                "total": 246
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 611,
+                "reconfirm_votes": 20,
+                "total": 631
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 65,
+                "reconfirm_votes": 3,
+                "total": 68
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 5,
+                "reconfirm_votes": 5,
+                "total": 10
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 29,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 28",
+        "vote_type": "관내투표",
+        "valid_votes": 2086,
+        "invalid_votes": 0,
+        "total_votes": 2086,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 572,
+                "reconfirm_votes": 10,
+                "total": 582
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1203,
+                "reconfirm_votes": 34,
+                "total": 1237
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 122,
+                "reconfirm_votes": 124,
+                "total": 246
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 21,
+                "reconfirm_votes": 0,
+                "total": 21
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 30,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 29",
+        "vote_type": "관내투표",
+        "valid_votes": 2259,
+        "invalid_votes": 0,
+        "total_votes": 2259,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 641,
+                "reconfirm_votes": 13,
+                "total": 654
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1405,
+                "reconfirm_votes": 29,
+                "total": 1434
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 143,
+                "reconfirm_votes": 3,
+                "total": 146
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 24,
+                "reconfirm_votes": 1,
+                "total": 25
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 31,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 30",
+        "vote_type": "관내투표",
+        "valid_votes": 1916,
+        "invalid_votes": 0,
+        "total_votes": 1916,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 451,
+                "reconfirm_votes": 7,
+                "total": 458
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1231,
+                "reconfirm_votes": 19,
+                "total": 1250
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 155,
+                "reconfirm_votes": 5,
+                "total": 160
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 23,
+                "reconfirm_votes": 23,
+                "total": 46
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 32,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 31",
+        "vote_type": "관내투표",
+        "valid_votes": 1240,
+        "invalid_votes": 0,
+        "total_votes": 1240,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 272,
+                "reconfirm_votes": 13,
+                "total": 285
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 788,
+                "reconfirm_votes": 32,
+                "total": 820
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 100,
+                "reconfirm_votes": 3,
+                "total": 103
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 12,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 4,
+                "total": 8
+            }
+        ]
+    },
+    {
+        "id": 33,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 32",
+        "vote_type": "관내투표",
+        "valid_votes": 2137,
+        "invalid_votes": 0,
+        "total_votes": 2137,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1236,
+                "reconfirm_votes": 24,
+                "total": 1260
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 607,
+                "reconfirm_votes": 18,
+                "total": 625
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 200,
+                "reconfirm_votes": 4,
+                "total": 204
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 24,
+                "reconfirm_votes": 24,
+                "total": 48
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 34,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 33",
+        "vote_type": "관내투표",
+        "valid_votes": 1669,
+        "invalid_votes": 0,
+        "total_votes": 1669,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 498,
+                "reconfirm_votes": 7,
+                "total": 505
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 939,
+                "reconfirm_votes": 19,
+                "total": 958
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 181,
+                "reconfirm_votes": 7,
+                "total": 188
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 15,
+                "reconfirm_votes": 1,
+                "total": 16
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 35,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 34",
+        "vote_type": "관내투표",
+        "valid_votes": 2947,
+        "invalid_votes": 0,
+        "total_votes": 2947,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 673,
+                "reconfirm_votes": 684,
+                "total": 1357
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1331,
+                "reconfirm_votes": 45,
+                "total": 1376
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 181,
+                "reconfirm_votes": 4,
+                "total": 185
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 24,
+                "reconfirm_votes": 0,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 5,
+                "reconfirm_votes": 0,
+                "total": 5
+            }
+        ]
+    },
+    {
+        "id": 36,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 35",
+        "vote_type": "관내투표",
+        "valid_votes": 1473,
+        "invalid_votes": 0,
+        "total_votes": 1473,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 386,
+                "reconfirm_votes": 15,
+                "total": 401
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 857,
+                "reconfirm_votes": 49,
+                "total": 906
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 147,
+                "reconfirm_votes": 4,
+                "total": 151
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 14,
+                "reconfirm_votes": 1,
+                "total": 15
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 37,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 36",
+        "vote_type": "관내투표",
+        "valid_votes": 2323,
+        "invalid_votes": 0,
+        "total_votes": 2323,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 778,
+                "reconfirm_votes": 16,
+                "total": 794
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1172,
+                "reconfirm_votes": 30,
+                "total": 1202
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 263,
+                "reconfirm_votes": 5,
+                "total": 268
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 29,
+                "reconfirm_votes": 29,
+                "total": 58
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 38,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 37",
+        "vote_type": "관내투표",
+        "valid_votes": 3682,
+        "invalid_votes": 0,
+        "total_votes": 3682,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1973,
+                "reconfirm_votes": 33,
+                "total": 2006
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1181,
+                "reconfirm_votes": 38,
+                "total": 1219
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 381,
+                "reconfirm_votes": 8,
+                "total": 389
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 31,
+                "reconfirm_votes": 31,
+                "total": 62
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 39,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 38",
+        "vote_type": "관내투표",
+        "valid_votes": 1488,
+        "invalid_votes": 0,
+        "total_votes": 1488,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 346,
+                "reconfirm_votes": 7,
+                "total": 353
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 926,
+                "reconfirm_votes": 14,
+                "total": 940
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 169,
+                "reconfirm_votes": 3,
+                "total": 172
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 1,
+                "total": 13
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 5,
+                "reconfirm_votes": 5,
+                "total": 10
+            }
+        ]
+    },
+    {
+        "id": 40,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 39",
+        "vote_type": "관내투표",
+        "valid_votes": 1306,
+        "invalid_votes": 0,
+        "total_votes": 1306,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 344,
+                "reconfirm_votes": 6,
+                "total": 350
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 819,
+                "reconfirm_votes": 28,
+                "total": 847
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 80,
+                "reconfirm_votes": 1,
+                "total": 81
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 12,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 41,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 40",
+        "vote_type": "관내투표",
+        "valid_votes": 1662,
+        "invalid_votes": 0,
+        "total_votes": 1662,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 471,
+                "reconfirm_votes": 7,
+                "total": 478
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 912,
+                "reconfirm_votes": 17,
+                "total": 929
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 216,
+                "reconfirm_votes": 3,
+                "total": 219
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 18,
+                "reconfirm_votes": 18,
+                "total": 36
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 42,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 41",
+        "vote_type": "관내투표",
+        "valid_votes": 1399,
+        "invalid_votes": 0,
+        "total_votes": 1399,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 337,
+                "reconfirm_votes": 4,
+                "total": 341
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 837,
+                "reconfirm_votes": 22,
+                "total": 859
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 94,
+                "reconfirm_votes": 94,
+                "total": 188
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 10,
+                "reconfirm_votes": 1,
+                "total": 11
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 43,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 42",
+        "vote_type": "관내투표",
+        "valid_votes": 2051,
+        "invalid_votes": 0,
+        "total_votes": 2051,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 691,
+                "reconfirm_votes": 2,
+                "total": 693
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1053,
+                "reconfirm_votes": 15,
+                "total": 1068
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 238,
+                "reconfirm_votes": 2,
+                "total": 240
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 22,
+                "reconfirm_votes": 22,
+                "total": 44
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 44,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 43",
+        "vote_type": "관내투표",
+        "valid_votes": 3531,
+        "invalid_votes": 0,
+        "total_votes": 3531,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1985,
+                "reconfirm_votes": 41,
+                "total": 2026
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1203,
+                "reconfirm_votes": 34,
+                "total": 1237
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 239,
+                "reconfirm_votes": 0,
+                "total": 239
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 27,
+                "reconfirm_votes": 1,
+                "total": 28
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 45,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 44",
+        "vote_type": "관내투표",
+        "valid_votes": 1605,
+        "invalid_votes": 0,
+        "total_votes": 1605,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 383,
+                "reconfirm_votes": 6,
+                "total": 389
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1063,
+                "reconfirm_votes": 33,
+                "total": 1096
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 92,
+                "reconfirm_votes": 4,
+                "total": 96
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 12,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 46,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 45",
+        "vote_type": "관내투표",
+        "valid_votes": 2841,
+        "invalid_votes": 0,
+        "total_votes": 2841,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 941,
+                "reconfirm_votes": 15,
+                "total": 956
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1506,
+                "reconfirm_votes": 33,
+                "total": 1539
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 279,
+                "reconfirm_votes": 5,
+                "total": 284
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 28,
+                "reconfirm_votes": 28,
+                "total": 56
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 47,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 46",
+        "vote_type": "관내투표",
+        "valid_votes": 1705,
+        "invalid_votes": 0,
+        "total_votes": 1705,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 449,
+                "reconfirm_votes": 16,
+                "total": 465
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 996,
+                "reconfirm_votes": 44,
+                "total": 1040
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 83,
+                "reconfirm_votes": 85,
+                "total": 168
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 16,
+                "reconfirm_votes": 16,
+                "total": 32
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 48,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 47",
+        "vote_type": "관내투표",
+        "valid_votes": 1299,
+        "invalid_votes": 0,
+        "total_votes": 1299,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 283,
+                "reconfirm_votes": 12,
+                "total": 295
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 812,
+                "reconfirm_votes": 38,
+                "total": 850
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 71,
+                "reconfirm_votes": 71,
+                "total": 142
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 5,
+                "reconfirm_votes": 5,
+                "total": 10
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 49,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 48",
+        "vote_type": "관내투표",
+        "valid_votes": 2425,
+        "invalid_votes": 0,
+        "total_votes": 2425,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 613,
+                "reconfirm_votes": 11,
+                "total": 624
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1504,
+                "reconfirm_votes": 44,
+                "total": 1548
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 215,
+                "reconfirm_votes": 7,
+                "total": 222
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 23,
+                "reconfirm_votes": 2,
+                "total": 25
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 50,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 49",
+        "vote_type": "관내투표",
+        "valid_votes": 3532,
+        "invalid_votes": 0,
+        "total_votes": 3532,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 2118,
+                "reconfirm_votes": 40,
+                "total": 2158
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1041,
+                "reconfirm_votes": 26,
+                "total": 1067
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 239,
+                "reconfirm_votes": 6,
+                "total": 245
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 29,
+                "reconfirm_votes": 29,
+                "total": 58
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 51,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 50",
+        "vote_type": "관내투표",
+        "valid_votes": 1267,
+        "invalid_votes": 0,
+        "total_votes": 1267,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 323,
+                "reconfirm_votes": 8,
+                "total": 331
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 781,
+                "reconfirm_votes": 21,
+                "total": 802
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 108,
+                "reconfirm_votes": 3,
+                "total": 111
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 11,
+                "reconfirm_votes": 12,
+                "total": 23
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 52,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 51",
+        "vote_type": "관내투표",
+        "valid_votes": 1796,
+        "invalid_votes": 0,
+        "total_votes": 1796,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 673,
+                "reconfirm_votes": 13,
+                "total": 686
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 923,
+                "reconfirm_votes": 22,
+                "total": 945
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 140,
+                "reconfirm_votes": 2,
+                "total": 142
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 21,
+                "reconfirm_votes": 1,
+                "total": 22
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 53,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 52",
+        "vote_type": "관내투표",
+        "valid_votes": 1215,
+        "invalid_votes": 0,
+        "total_votes": 1215,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 348,
+                "reconfirm_votes": 13,
+                "total": 361
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 728,
+                "reconfirm_votes": 34,
+                "total": 762
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 81,
+                "reconfirm_votes": 1,
+                "total": 82
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 8,
+                "reconfirm_votes": 0,
+                "total": 8
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 0,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 54,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 53",
+        "vote_type": "관내투표",
+        "valid_votes": 2634,
+        "invalid_votes": 0,
+        "total_votes": 2634,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 709,
+                "reconfirm_votes": 16,
+                "total": 725
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1505,
+                "reconfirm_votes": 38,
+                "total": 1543
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 165,
+                "reconfirm_votes": 165,
+                "total": 330
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 17,
+                "reconfirm_votes": 17,
+                "total": 34
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 55,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 54",
+        "vote_type": "관내투표",
+        "valid_votes": 2665,
+        "invalid_votes": 0,
+        "total_votes": 2665,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 730,
+                "reconfirm_votes": 16,
+                "total": 746
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1489,
+                "reconfirm_votes": 42,
+                "total": 1531
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 169,
+                "reconfirm_votes": 175,
+                "total": 344
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 20,
+                "reconfirm_votes": 20,
+                "total": 40
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 56,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 55",
+        "vote_type": "관내투표",
+        "valid_votes": 13187,
+        "invalid_votes": 0,
+        "total_votes": 13187,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 2574,
+                "reconfirm_votes": 8889,
+                "total": 11463
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1347,
+                "reconfirm_votes": 54,
+                "total": 1401
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 237,
+                "reconfirm_votes": 7,
+                "total": 244
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 35,
+                "reconfirm_votes": 36,
+                "total": 71
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 4,
+                "total": 8
+            }
+        ]
+    },
+    {
+        "id": 57,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 56",
+        "vote_type": "관내투표",
+        "valid_votes": 2124,
+        "invalid_votes": 0,
+        "total_votes": 2124,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 494,
+                "reconfirm_votes": 12,
+                "total": 506
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1459,
+                "reconfirm_votes": 44,
+                "total": 1503
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 93,
+                "reconfirm_votes": 2,
+                "total": 95
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 8,
+                "reconfirm_votes": 8,
+                "total": 16
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 58,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 57",
+        "vote_type": "관내투표",
+        "valid_votes": 6538,
+        "invalid_votes": 0,
+        "total_votes": 6538,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 600,
+                "reconfirm_votes": 13,
+                "total": 613
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1141,
+                "reconfirm_votes": 4645,
+                "total": 5786
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 122,
+                "reconfirm_votes": 4,
+                "total": 126
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 11,
+                "reconfirm_votes": 1,
+                "total": 12
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 59,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 58",
+        "vote_type": "관내투표",
+        "valid_votes": 873,
+        "invalid_votes": 0,
+        "total_votes": 873,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 351,
+                "reconfirm_votes": 3,
+                "total": 354
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 410,
+                "reconfirm_votes": 9,
+                "total": 419
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 75,
+                "reconfirm_votes": 4,
+                "total": 79
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 10,
+                "reconfirm_votes": 10,
+                "total": 20
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 60,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 59",
+        "vote_type": "관내투표",
+        "valid_votes": 2007,
+        "invalid_votes": 0,
+        "total_votes": 2007,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 863,
+                "reconfirm_votes": 6,
+                "total": 869
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 923,
+                "reconfirm_votes": 15,
+                "total": 938
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 161,
+                "reconfirm_votes": 3,
+                "total": 164
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 17,
+                "reconfirm_votes": 17,
+                "total": 34
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 61,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 60",
+        "vote_type": "관내투표",
+        "valid_votes": 2302,
+        "invalid_votes": 0,
+        "total_votes": 2302,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 846,
+                "reconfirm_votes": 63,
+                "total": 909
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1058,
+                "reconfirm_votes": 74,
+                "total": 1132
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 219,
+                "reconfirm_votes": 18,
+                "total": 237
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 24,
+                "reconfirm_votes": 0,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 62,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 61",
+        "vote_type": "관내투표",
+        "valid_votes": 3589,
+        "invalid_votes": 0,
+        "total_votes": 3589,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 2056,
+                "reconfirm_votes": 41,
+                "total": 2097
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1237,
+                "reconfirm_votes": 44,
+                "total": 1281
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 175,
+                "reconfirm_votes": 8,
+                "total": 183
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 23,
+                "reconfirm_votes": 1,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 63,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 62",
+        "vote_type": "관내투표",
+        "valid_votes": 1133,
+        "invalid_votes": 0,
+        "total_votes": 1133,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 286,
+                "reconfirm_votes": 11,
+                "total": 297
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 745,
+                "reconfirm_votes": 37,
+                "total": 782
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 39,
+                "reconfirm_votes": 1,
+                "total": 40
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 5,
+                "reconfirm_votes": 5,
+                "total": 10
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 64,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 63",
+        "vote_type": "관내투표",
+        "valid_votes": 1550,
+        "invalid_votes": 0,
+        "total_votes": 1550,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 366,
+                "reconfirm_votes": 8,
+                "total": 374
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 982,
+                "reconfirm_votes": 26,
+                "total": 1008
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 68,
+                "reconfirm_votes": 68,
+                "total": 136
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 16,
+                "reconfirm_votes": 16,
+                "total": 32
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 65,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 64",
+        "vote_type": "관내투표",
+        "valid_votes": 995,
+        "invalid_votes": 0,
+        "total_votes": 995,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 245,
+                "reconfirm_votes": 6,
+                "total": 251
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 661,
+                "reconfirm_votes": 12,
+                "total": 673
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 56,
+                "reconfirm_votes": 1,
+                "total": 57
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 7,
+                "reconfirm_votes": 7,
+                "total": 14
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 66,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 65",
+        "vote_type": "관내투표",
+        "valid_votes": 2151,
+        "invalid_votes": 0,
+        "total_votes": 2151,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 666,
+                "reconfirm_votes": 16,
+                "total": 682
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1221,
+                "reconfirm_votes": 45,
+                "total": 1266
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 148,
+                "reconfirm_votes": 5,
+                "total": 153
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 23,
+                "reconfirm_votes": 23,
+                "total": 46
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 67,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 66",
+        "vote_type": "관내투표",
+        "valid_votes": 1709,
+        "invalid_votes": 0,
+        "total_votes": 1709,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 606,
+                "reconfirm_votes": 14,
+                "total": 620
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 865,
+                "reconfirm_votes": 25,
+                "total": 890
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 92,
+                "reconfirm_votes": 92,
+                "total": 184
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 14,
+                "reconfirm_votes": 0,
+                "total": 14
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 68,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 67",
+        "vote_type": "관내투표",
+        "valid_votes": 1825,
+        "invalid_votes": 0,
+        "total_votes": 1825,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 707,
+                "reconfirm_votes": 11,
+                "total": 718
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 914,
+                "reconfirm_votes": 14,
+                "total": 928
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 144,
+                "reconfirm_votes": 3,
+                "total": 147
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 14,
+                "reconfirm_votes": 14,
+                "total": 28
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 69,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 68",
+        "vote_type": "관내투표",
+        "valid_votes": 2936,
+        "invalid_votes": 0,
+        "total_votes": 2936,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1638,
+                "reconfirm_votes": 26,
+                "total": 1664
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 935,
+                "reconfirm_votes": 30,
+                "total": 965
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 262,
+                "reconfirm_votes": 3,
+                "total": 265
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 17,
+                "reconfirm_votes": 17,
+                "total": 34
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 4,
+                "total": 8
+            }
+        ]
+    },
+    {
+        "id": 70,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 69",
+        "vote_type": "관내투표",
+        "valid_votes": 2274,
+        "invalid_votes": 0,
+        "total_votes": 2274,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 432,
+                "reconfirm_votes": 13,
+                "total": 445
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1044,
+                "reconfirm_votes": 454,
+                "total": 1498
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 151,
+                "reconfirm_votes": 155,
+                "total": 306
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 12,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 71,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 70",
+        "vote_type": "관내투표",
+        "valid_votes": 1915,
+        "invalid_votes": 0,
+        "total_votes": 1915,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 660,
+                "reconfirm_votes": 11,
+                "total": 671
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1037,
+                "reconfirm_votes": 22,
+                "total": 1059
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 157,
+                "reconfirm_votes": 2,
+                "total": 159
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 11,
+                "reconfirm_votes": 11,
+                "total": 22
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 72,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 71",
+        "vote_type": "관내투표",
+        "valid_votes": 1546,
+        "invalid_votes": 0,
+        "total_votes": 1546,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 513,
+                "reconfirm_votes": 11,
+                "total": 524
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 886,
+                "reconfirm_votes": 23,
+                "total": 909
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 84,
+                "reconfirm_votes": 2,
+                "total": 86
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 11,
+                "reconfirm_votes": 11,
+                "total": 22
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 4,
+                "total": 5
+            }
+        ]
+    },
+    {
+        "id": 73,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 72",
+        "vote_type": "관내투표",
+        "valid_votes": 2566,
+        "invalid_votes": 0,
+        "total_votes": 2566,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1550,
+                "reconfirm_votes": 24,
+                "total": 1574
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 797,
+                "reconfirm_votes": 19,
+                "total": 816
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 130,
+                "reconfirm_votes": 2,
+                "total": 132
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 18,
+                "reconfirm_votes": 18,
+                "total": 36
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 4,
+                "total": 8
+            }
+        ]
+    },
+    {
+        "id": 74,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 73",
+        "vote_type": "관내투표",
+        "valid_votes": 677,
+        "invalid_votes": 0,
+        "total_votes": 677,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 168,
+                "reconfirm_votes": 6,
+                "total": 174
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 438,
+                "reconfirm_votes": 18,
+                "total": 456
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 27,
+                "reconfirm_votes": 2,
+                "total": 29
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 9,
+                "reconfirm_votes": 9,
+                "total": 18
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 75,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 74",
+        "vote_type": "관내투표",
+        "valid_votes": 1115,
+        "invalid_votes": 0,
+        "total_votes": 1115,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 307,
+                "reconfirm_votes": 17,
+                "total": 324
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 705,
+                "reconfirm_votes": 22,
+                "total": 727
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 55,
+                "reconfirm_votes": 1,
+                "total": 56
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 5,
+                "reconfirm_votes": 1,
+                "total": 6
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 76,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 75",
+        "vote_type": "관내투표",
+        "valid_votes": 2124,
+        "invalid_votes": 0,
+        "total_votes": 2124,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 784,
+                "reconfirm_votes": 12,
+                "total": 796
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1142,
+                "reconfirm_votes": 16,
+                "total": 1158
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 136,
+                "reconfirm_votes": 1,
+                "total": 137
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 16,
+                "reconfirm_votes": 16,
+                "total": 32
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 77,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 76",
+        "vote_type": "관내투표",
+        "valid_votes": 3519,
+        "invalid_votes": 0,
+        "total_votes": 3519,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1862,
+                "reconfirm_votes": 35,
+                "total": 1897
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1272,
+                "reconfirm_votes": 49,
+                "total": 1321
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 246,
+                "reconfirm_votes": 3,
+                "total": 249
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 23,
+                "reconfirm_votes": 23,
+                "total": 46
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 78,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 77",
+        "vote_type": "관내투표",
+        "valid_votes": 1354,
+        "invalid_votes": 0,
+        "total_votes": 1354,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 372,
+                "reconfirm_votes": 5,
+                "total": 377
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 813,
+                "reconfirm_votes": 22,
+                "total": 835
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 60,
+                "reconfirm_votes": 60,
+                "total": 120
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 10,
+                "reconfirm_votes": 10,
+                "total": 20
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 79,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 78",
+        "vote_type": "관내투표",
+        "valid_votes": 1643,
+        "invalid_votes": 0,
+        "total_votes": 1643,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 380,
+                "reconfirm_votes": 391,
+                "total": 771
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 746,
+                "reconfirm_votes": 33,
+                "total": 779
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 71,
+                "reconfirm_votes": 2,
+                "total": 73
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 1,
+                "total": 13
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 4,
+                "total": 7
+            }
+        ]
+    },
+    {
+        "id": 80,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 79",
+        "vote_type": "관내투표",
+        "valid_votes": 1179,
+        "invalid_votes": 0,
+        "total_votes": 1179,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 326,
+                "reconfirm_votes": 11,
+                "total": 337
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 740,
+                "reconfirm_votes": 17,
+                "total": 757
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 62,
+                "reconfirm_votes": 3,
+                "total": 65
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 10,
+                "reconfirm_votes": 10,
+                "total": 20
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 81,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 80",
+        "vote_type": "관내투표",
+        "valid_votes": 1199,
+        "invalid_votes": 0,
+        "total_votes": 1199,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 297,
+                "reconfirm_votes": 9,
+                "total": 306
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 738,
+                "reconfirm_votes": 31,
+                "total": 769
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 98,
+                "reconfirm_votes": 7,
+                "total": 105
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 9,
+                "reconfirm_votes": 9,
+                "total": 18
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 82,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 81",
+        "vote_type": "관내투표",
+        "valid_votes": 854,
+        "invalid_votes": 0,
+        "total_votes": 854,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 234,
+                "reconfirm_votes": 5,
+                "total": 239
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 534,
+                "reconfirm_votes": 12,
+                "total": 546
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 57,
+                "reconfirm_votes": 4,
+                "total": 61
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 5,
+                "reconfirm_votes": 1,
+                "total": 6
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 83,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 82",
+        "vote_type": "관내투표",
+        "valid_votes": 995,
+        "invalid_votes": 0,
+        "total_votes": 995,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 176,
+                "reconfirm_votes": 176,
+                "total": 352
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 427,
+                "reconfirm_votes": 14,
+                "total": 441
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 93,
+                "reconfirm_votes": 93,
+                "total": 186
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 7,
+                "reconfirm_votes": 7,
+                "total": 14
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 84,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 83",
+        "vote_type": "관내투표",
+        "valid_votes": 3072,
+        "invalid_votes": 0,
+        "total_votes": 3072,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1677,
+                "reconfirm_votes": 22,
+                "total": 1699
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1078,
+                "reconfirm_votes": 36,
+                "total": 1114
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 234,
+                "reconfirm_votes": 2,
+                "total": 236
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 17,
+                "reconfirm_votes": 1,
+                "total": 18
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 5,
+                "reconfirm_votes": 0,
+                "total": 5
+            }
+        ]
+    },
+    {
+        "id": 85,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 84",
+        "vote_type": "관내투표",
+        "valid_votes": 2624,
+        "invalid_votes": 0,
+        "total_votes": 2624,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 807,
+                "reconfirm_votes": 13,
+                "total": 820
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1532,
+                "reconfirm_votes": 42,
+                "total": 1574
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 185,
+                "reconfirm_votes": 1,
+                "total": 186
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 19,
+                "reconfirm_votes": 19,
+                "total": 38
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 86,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 85",
+        "vote_type": "관내투표",
+        "valid_votes": 1709,
+        "invalid_votes": 0,
+        "total_votes": 1709,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 417,
+                "reconfirm_votes": 8,
+                "total": 425
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1108,
+                "reconfirm_votes": 28,
+                "total": 1136
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 119,
+                "reconfirm_votes": 1,
+                "total": 120
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 13,
+                "reconfirm_votes": 13,
+                "total": 26
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 87,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 86",
+        "vote_type": "관내투표",
+        "valid_votes": 1314,
+        "invalid_votes": 0,
+        "total_votes": 1314,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 354,
+                "reconfirm_votes": 5,
+                "total": 359
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 837,
+                "reconfirm_votes": 29,
+                "total": 866
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 71,
+                "reconfirm_votes": 2,
+                "total": 73
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 7,
+                "reconfirm_votes": 8,
+                "total": 15
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 88,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 87",
+        "vote_type": "관내투표",
+        "valid_votes": 2119,
+        "invalid_votes": 0,
+        "total_votes": 2119,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 526,
+                "reconfirm_votes": 7,
+                "total": 533
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1237,
+                "reconfirm_votes": 47,
+                "total": 1284
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 136,
+                "reconfirm_votes": 136,
+                "total": 272
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 13,
+                "reconfirm_votes": 13,
+                "total": 26
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 89,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 88",
+        "vote_type": "관내투표",
+        "valid_votes": 4266,
+        "invalid_votes": 0,
+        "total_votes": 4266,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 2246,
+                "reconfirm_votes": 51,
+                "total": 2297
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1482,
+                "reconfirm_votes": 54,
+                "total": 1536
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 380,
+                "reconfirm_votes": 5,
+                "total": 385
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 21,
+                "reconfirm_votes": 21,
+                "total": 42
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 90,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 89",
+        "vote_type": "관내투표",
+        "valid_votes": 1784,
+        "invalid_votes": 0,
+        "total_votes": 1784,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 542,
+                "reconfirm_votes": 5,
+                "total": 547
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 958,
+                "reconfirm_votes": 21,
+                "total": 979
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 213,
+                "reconfirm_votes": 4,
+                "total": 217
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 20,
+                "reconfirm_votes": 20,
+                "total": 40
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 91,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 90",
+        "vote_type": "관내투표",
+        "valid_votes": 1635,
+        "invalid_votes": 0,
+        "total_votes": 1635,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 451,
+                "reconfirm_votes": 11,
+                "total": 462
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1023,
+                "reconfirm_votes": 22,
+                "total": 1045
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 107,
+                "reconfirm_votes": 2,
+                "total": 109
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 15,
+                "reconfirm_votes": 2,
+                "total": 17
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 92,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 91",
+        "vote_type": "관내투표",
+        "valid_votes": 1632,
+        "invalid_votes": 0,
+        "total_votes": 1632,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 444,
+                "reconfirm_votes": 8,
+                "total": 452
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1005,
+                "reconfirm_votes": 0,
+                "total": 1005
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 137,
+                "reconfirm_votes": 0,
+                "total": 137
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 16,
+                "reconfirm_votes": 16,
+                "total": 32
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 93,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 92",
+        "vote_type": "관내투표",
+        "valid_votes": 2398,
+        "invalid_votes": 0,
+        "total_votes": 2398,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 846,
+                "reconfirm_votes": 12,
+                "total": 858
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1285,
+                "reconfirm_votes": 28,
+                "total": 1313
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 167,
+                "reconfirm_votes": 2,
+                "total": 169
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 27,
+                "reconfirm_votes": 27,
+                "total": 54
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 94,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 93",
+        "vote_type": "관내투표",
+        "valid_votes": 2330,
+        "invalid_votes": 0,
+        "total_votes": 2330,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1252,
+                "reconfirm_votes": 24,
+                "total": 1276
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 800,
+                "reconfirm_votes": 28,
+                "total": 828
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 169,
+                "reconfirm_votes": 21,
+                "total": 190
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 18,
+                "reconfirm_votes": 18,
+                "total": 36
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 95,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 94",
+        "vote_type": "관내투표",
+        "valid_votes": 1114,
+        "invalid_votes": 0,
+        "total_votes": 1114,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 317,
+                "reconfirm_votes": 0,
+                "total": 317
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 729,
+                "reconfirm_votes": 0,
+                "total": 729
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 58,
+                "reconfirm_votes": 0,
+                "total": 58
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 9,
+                "reconfirm_votes": 0,
+                "total": 9
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 96,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 95",
+        "vote_type": "관내투표",
+        "valid_votes": 982,
+        "invalid_votes": 0,
+        "total_votes": 982,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 237,
+                "reconfirm_votes": 9,
+                "total": 246
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 589,
+                "reconfirm_votes": 24,
+                "total": 613
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 53,
+                "reconfirm_votes": 53,
+                "total": 106
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 8,
+                "reconfirm_votes": 8,
+                "total": 16
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 97,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 96",
+        "vote_type": "관내투표",
+        "valid_votes": 1846,
+        "invalid_votes": 0,
+        "total_votes": 1846,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 522,
+                "reconfirm_votes": 53,
+                "total": 575
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1039,
+                "reconfirm_votes": 31,
+                "total": 1070
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 156,
+                "reconfirm_votes": 6,
+                "total": 162
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 19,
+                "reconfirm_votes": 19,
+                "total": 38
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 98,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 97",
+        "vote_type": "관내투표",
+        "valid_votes": 3924,
+        "invalid_votes": 0,
+        "total_votes": 3924,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 2297,
+                "reconfirm_votes": 43,
+                "total": 2340
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1292,
+                "reconfirm_votes": 53,
+                "total": 1345
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 190,
+                "reconfirm_votes": 2,
+                "total": 192
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 18,
+                "reconfirm_votes": 19,
+                "total": 37
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 5,
+                "reconfirm_votes": 5,
+                "total": 10
+            }
+        ]
+    },
+    {
+        "id": 99,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 98",
+        "vote_type": "관내투표",
+        "valid_votes": 921,
+        "invalid_votes": 0,
+        "total_votes": 921,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 212,
+                "reconfirm_votes": 9,
+                "total": 221
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 607,
+                "reconfirm_votes": 28,
+                "total": 635
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 45,
+                "reconfirm_votes": 2,
+                "total": 47
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 8,
+                "reconfirm_votes": 8,
+                "total": 16
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 100,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 99",
+        "vote_type": "관내투표",
+        "valid_votes": 1424,
+        "invalid_votes": 0,
+        "total_votes": 1424,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 428,
+                "reconfirm_votes": 11,
+                "total": 439
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 829,
+                "reconfirm_votes": 26,
+                "total": 855
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 94,
+                "reconfirm_votes": 3,
+                "total": 97
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 11,
+                "reconfirm_votes": 11,
+                "total": 22
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 9,
+                "total": 11
+            }
+        ]
+    },
+    {
+        "id": 101,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 100",
+        "vote_type": "관내투표",
+        "valid_votes": 1765,
+        "invalid_votes": 0,
+        "total_votes": 1765,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 588,
+                "reconfirm_votes": 10,
+                "total": 598
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 968,
+                "reconfirm_votes": 31,
+                "total": 999
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 116,
+                "reconfirm_votes": 2,
+                "total": 118
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 22,
+                "reconfirm_votes": 22,
+                "total": 44
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 102,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 101",
+        "vote_type": "관내투표",
+        "valid_votes": 1953,
+        "invalid_votes": 0,
+        "total_votes": 1953,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 747,
+                "reconfirm_votes": 13,
+                "total": 760
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1030,
+                "reconfirm_votes": 23,
+                "total": 1053
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 120,
+                "reconfirm_votes": 1,
+                "total": 121
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 9,
+                "reconfirm_votes": 9,
+                "total": 18
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 103,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 102",
+        "vote_type": "관내투표",
+        "valid_votes": 1195,
+        "invalid_votes": 0,
+        "total_votes": 1195,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 333,
+                "reconfirm_votes": 14,
+                "total": 347
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 707,
+                "reconfirm_votes": 38,
+                "total": 745
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 42,
+                "reconfirm_votes": 43,
+                "total": 85
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 8,
+                "reconfirm_votes": 9,
+                "total": 17
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 104,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 103",
+        "vote_type": "관내투표",
+        "valid_votes": 1461,
+        "invalid_votes": 0,
+        "total_votes": 1461,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 407,
+                "reconfirm_votes": 5,
+                "total": 412
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 922,
+                "reconfirm_votes": 19,
+                "total": 941
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 92,
+                "reconfirm_votes": 5,
+                "total": 97
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 8,
+                "reconfirm_votes": 1,
+                "total": 9
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 105,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 104",
+        "vote_type": "관내투표",
+        "valid_votes": 1920,
+        "invalid_votes": 0,
+        "total_votes": 1920,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 573,
+                "reconfirm_votes": 8,
+                "total": 581
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1047,
+                "reconfirm_votes": 23,
+                "total": 1070
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 122,
+                "reconfirm_votes": 122,
+                "total": 244
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 12,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 106,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 105",
+        "vote_type": "관내투표",
+        "valid_votes": 1752,
+        "invalid_votes": 0,
+        "total_votes": 1752,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 540,
+                "reconfirm_votes": 8,
+                "total": 548
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 919,
+                "reconfirm_votes": 31,
+                "total": 950
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 116,
+                "reconfirm_votes": 116,
+                "total": 232
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 17,
+                "reconfirm_votes": 1,
+                "total": 18
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 107,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 106",
+        "vote_type": "관내투표",
+        "valid_votes": 2940,
+        "invalid_votes": 0,
+        "total_votes": 2940,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1626,
+                "reconfirm_votes": 24,
+                "total": 1650
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 883,
+                "reconfirm_votes": 23,
+                "total": 906
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 310,
+                "reconfirm_votes": 7,
+                "total": 317
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 31,
+                "reconfirm_votes": 31,
+                "total": 62
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 5,
+                "reconfirm_votes": 0,
+                "total": 5
+            }
+        ]
+    },
+    {
+        "id": 108,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 107",
+        "vote_type": "관내투표",
+        "valid_votes": 2480,
+        "invalid_votes": 0,
+        "total_votes": 2480,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 617,
+                "reconfirm_votes": 11,
+                "total": 628
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1585,
+                "reconfirm_votes": 38,
+                "total": 1623
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 191,
+                "reconfirm_votes": 2,
+                "total": 193
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 16,
+                "reconfirm_votes": 16,
+                "total": 32
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 109,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 108",
+        "vote_type": "관내투표",
+        "valid_votes": 2271,
+        "invalid_votes": 0,
+        "total_votes": 2271,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 580,
+                "reconfirm_votes": 8,
+                "total": 588
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1346,
+                "reconfirm_votes": 36,
+                "total": 1382
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 254,
+                "reconfirm_votes": 7,
+                "total": 261
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 18,
+                "reconfirm_votes": 18,
+                "total": 36
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 110,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 109",
+        "vote_type": "관내투표",
+        "valid_votes": 3267,
+        "invalid_votes": 0,
+        "total_votes": 3267,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1628,
+                "reconfirm_votes": 28,
+                "total": 1656
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1321,
+                "reconfirm_votes": 52,
+                "total": 1373
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 190,
+                "reconfirm_votes": 2,
+                "total": 192
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 21,
+                "reconfirm_votes": 21,
+                "total": 42
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 111,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 110",
+        "vote_type": "관내투표",
+        "valid_votes": 1886,
+        "invalid_votes": 0,
+        "total_votes": 1886,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 524,
+                "reconfirm_votes": 9,
+                "total": 533
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1140,
+                "reconfirm_votes": 26,
+                "total": 1166
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 144,
+                "reconfirm_votes": 1,
+                "total": 145
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 20,
+                "reconfirm_votes": 20,
+                "total": 40
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 112,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 111",
+        "vote_type": "관내투표",
+        "valid_votes": 1402,
+        "invalid_votes": 0,
+        "total_votes": 1402,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 470,
+                "reconfirm_votes": 10,
+                "total": 480
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 741,
+                "reconfirm_votes": 23,
+                "total": 764
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 123,
+                "reconfirm_votes": 1,
+                "total": 124
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 14,
+                "reconfirm_votes": 14,
+                "total": 28
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 113,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 112",
+        "vote_type": "관내투표",
+        "valid_votes": 620,
+        "invalid_votes": 0,
+        "total_votes": 620,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 133,
+                "reconfirm_votes": 8,
+                "total": 141
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 425,
+                "reconfirm_votes": 20,
+                "total": 445
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 13,
+                "reconfirm_votes": 13,
+                "total": 26
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 114,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 113",
+        "vote_type": "관내투표",
+        "valid_votes": 1661,
+        "invalid_votes": 0,
+        "total_votes": 1661,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 453,
+                "reconfirm_votes": 13,
+                "total": 466
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 920,
+                "reconfirm_votes": 31,
+                "total": 951
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 110,
+                "reconfirm_votes": 110,
+                "total": 220
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 12,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 115,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 114",
+        "vote_type": "관내투표",
+        "valid_votes": 1520,
+        "invalid_votes": 0,
+        "total_votes": 1520,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 459,
+                "reconfirm_votes": 30,
+                "total": 489
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 847,
+                "reconfirm_votes": 66,
+                "total": 913
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 95,
+                "reconfirm_votes": 5,
+                "total": 100
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 6,
+                "reconfirm_votes": 4,
+                "total": 10
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 4,
+                "total": 8
+            }
+        ]
+    },
+    {
+        "id": 116,
+        "voting_place": "부산진구개표상황표(39064)",
+        "district_name": "부산진구개표상황표(39064) - 투표구 115",
+        "vote_type": "관내투표",
+        "valid_votes": 2286,
+        "invalid_votes": 0,
+        "total_votes": 2286,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 532,
+                "reconfirm_votes": 539,
+                "total": 1071
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1002,
+                "reconfirm_votes": 22,
+                "total": 1024
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 160,
+                "reconfirm_votes": 2,
+                "total": 162
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 13,
+                "total": 25
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    }
+];
+
+        const CANDIDATES = [
+            { name: '이재명', color: '#E74C3C' },
+            { name: '김문수', color: '#3498DB' },
+            { name: '이준석', color: '#2ECC71' },
+            { name: '권영국', color: '#F39C12' },
+            { name: '송진호', color: '#9B59B6' }
+        ];
+
+        function Dashboard() {
+            const [selectedCandidates, setSelectedCandidates] = useState(
+                CANDIDATES.map(c => c.name)
+            );
+
+            // Calculate candidate totals
+            const candidateTotals = useMemo(() => {
+                const totals = {};
+                CANDIDATES.forEach(c => {
+                    totals[c.name] = {
+                        sorted: 0,
+                        reconfirm: 0,
+                        total: 0
+                    };
+                });
+
+                VOTING_DATA.forEach(district => {
+                    district.candidates.forEach(cand => {
+                        if (totals[cand.name]) {
+                            totals[cand.name].sorted += cand.sorted_votes;
+                            totals[cand.name].reconfirm += cand.reconfirm_votes;
+                            totals[cand.name].total += cand.total;
+                        }
+                    });
+                });
+
+                return totals;
+            }, []);
+
+            const toggleCandidate = (name) => {
+                setSelectedCandidates(prev =>
+                    prev.includes(name)
+                        ? prev.filter(c => c !== name)
+                        : [...prev, name]
+                );
+            };
+
+            const selectAll = () => {
+                setSelectedCandidates(CANDIDATES.map(c => c.name));
+            };
+
+            const clearAll = () => {
+                setSelectedCandidates([]);
+            };
+
+            const exportCSV = () => {
+                if (selectedCandidates.length === 0) {
+                    alert('선택된 후보자가 없습니다.');
+                    return;
+                }
+
+                let csv = '투표구,유형,유효투표,무효투표,전체투표';
+                selectedCandidates.forEach(name => {
+                    csv += `,${name}_분류,${name}_재확인,${name}_계`;
+                });
+                csv += '\n';
+
+                VOTING_DATA.forEach(district => {
+                    csv += `"${district.district_name}","${district.vote_type}",${district.valid_votes},${district.invalid_votes},${district.total_votes}`;
+
+                    selectedCandidates.forEach(name => {
+                        const cand = district.candidates.find(c => c.name === name);
+                        if (cand) {
+                            csv += `,${cand.sorted_votes},${cand.reconfirm_votes},${cand.total}`;
+                        } else {
+                            csv += ',0,0,0';
+                        }
+                    });
+
+                    csv += '\n';
+                });
+
+                // Add totals row
+                const totalValid = VOTING_DATA.reduce((sum, d) => sum + d.valid_votes, 0);
+                const totalInvalid = VOTING_DATA.reduce((sum, d) => sum + d.invalid_votes, 0);
+                const totalAll = totalValid + totalInvalid;
+
+                csv += `"합계","전체",${totalValid},${totalInvalid},${totalAll}`;
+
+                selectedCandidates.forEach(name => {
+                    const totals = candidateTotals[name];
+                    csv += `,${totals.sorted},${totals.reconfirm},${totals.total}`;
+                });
+
+                const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `부산진구개표상황표(39064)_개표상황_${selectedCandidates.length}명_${new Date().toISOString().split('T')[0]}.csv`;
+                link.click();
+            };
+
+            return (
+                <div className="dashboard">
+                    <div className="header">
+                        <h1>부산진구개표상황표(39064) 개표상황표 분석 대시보드</h1>
+                        <div className="subtitle">제21대 대통령선거 투표 심사·집계 분석</div>
+                    </div>
+
+                    <CandidateFilter
+                        selectedCandidates={selectedCandidates}
+                        candidateTotals={candidateTotals}
+                        onToggle={toggleCandidate}
+                        onSelectAll={selectAll}
+                        onClearAll={clearAll}
+                    />
+
+                    <div className="charts-grid">
+                        <ValidInvalidChart data={VOTING_DATA} />
+                        <ReliabilityChart
+                            candidateTotals={candidateTotals}
+                            selectedCandidates={selectedCandidates}
+                        />
+                    </div>
+
+                    <DataTable
+                        data={VOTING_DATA}
+                        selectedCandidates={selectedCandidates}
+                        candidateTotals={candidateTotals}
+                        onExport={exportCSV}
+                    />
+                </div>
+            );
+        }
+
+        function CandidateFilter({
+            selectedCandidates,
+            candidateTotals,
+            onToggle,
+            onSelectAll,
+            onClearAll
+        }) {
+            return (
+                <div className="filter-section">
+                    <div className="filter-header">
+                        <div className="filter-title">후보자 필터</div>
+                        <div className="button-group">
+                            <button className="btn btn-primary" onClick={onSelectAll}>
+                                전체선택
+                            </button>
+                            <button className="btn btn-secondary" onClick={onClearAll}>
+                                전체해제
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="candidates-grid">
+                        {CANDIDATES.map(candidate => {
+                            const isSelected = selectedCandidates.includes(candidate.name);
+                            const totals = candidateTotals[candidate.name];
+
+                            return (
+                                <div
+                                    key={candidate.name}
+                                    className={`candidate-checkbox ${isSelected ? 'selected' : ''}`}
+                                    onClick={() => onToggle(candidate.name)}
+                                    style={{
+                                        borderColor: isSelected ? candidate.color : undefined
+                                    }}
+                                >
+                                    <input type="checkbox" checked={isSelected} readOnly />
+                                    <div
+                                        className="candidate-name"
+                                        style={{ color: candidate.color }}
+                                    >
+                                        {candidate.name}
+                                    </div>
+                                    <div className="candidate-stats">
+                                        <div>분류된표: {totals.sorted.toLocaleString()}</div>
+                                        <div>재검표수: {totals.reconfirm.toLocaleString()}</div>
+                                        <div>계: {totals.total.toLocaleString()}</div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="selection-info">
+                        {selectedCandidates.length}명의 후보자 선택됨
+                    </div>
+                </div>
+            );
+        }
+
+        function ValidInvalidChart({ data }) {
+            const canvasRef = React.useRef(null);
+            const chartRef = React.useRef(null);
+
+            useEffect(() => {
+                if (!canvasRef.current) return;
+
+                // Group by voting place
+                const placeData = {};
+                data.forEach(district => {
+                    if (!placeData[district.voting_place]) {
+                        placeData[district.voting_place] = {
+                            valid: 0,
+                            invalid: 0
+                        };
+                    }
+                    placeData[district.voting_place].valid += district.valid_votes;
+                    placeData[district.voting_place].invalid += district.invalid_votes;
+                });
+
+                const labels = Object.keys(placeData);
+                const validData = labels.map(label => placeData[label].valid);
+                const invalidData = labels.map(label => placeData[label].invalid);
+
+                if (chartRef.current) {
+                    chartRef.current.destroy();
+                }
+
+                const ctx = canvasRef.current.getContext('2d');
+                chartRef.current = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: '유효투표',
+                                data: validData,
+                                backgroundColor: 'rgba(79, 158, 255, 0.8)',
+                                borderColor: 'rgba(79, 158, 255, 1)',
+                                borderWidth: 2
+                            },
+                            {
+                                label: '무효투표',
+                                data: invalidData,
+                                backgroundColor: 'rgba(255, 107, 107, 0.8)',
+                                borderColor: 'rgba(255, 107, 107, 1)',
+                                borderWidth: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#e8eaf0',
+                                    font: {
+                                        family: "'Noto Sans KR', sans-serif",
+                                        size: 12
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(26, 31, 58, 0.95)',
+                                titleColor: '#e8eaf0',
+                                bodyColor: '#a0a8c0',
+                                borderColor: '#2a3150',
+                                borderWidth: 1,
+                                padding: 12,
+                                titleFont: {
+                                    family: "'Noto Sans KR', sans-serif"
+                                },
+                                bodyFont: {
+                                    family: "'JetBrains Mono', monospace"
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    color: 'rgba(42, 49, 80, 0.5)'
+                                },
+                                ticks: {
+                                    color: '#a0a8c0',
+                                    font: {
+                                        family: "'Noto Sans KR', sans-serif"
+                                    }
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    color: 'rgba(42, 49, 80, 0.5)'
+                                },
+                                ticks: {
+                                    color: '#a0a8c0',
+                                    font: {
+                                        family: "'JetBrains Mono', monospace"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                return () => {
+                    if (chartRef.current) {
+                        chartRef.current.destroy();
+                    }
+                };
+            }, [data]);
+
+            return (
+                <div className="chart-card">
+                    <div className="chart-title">투표구별 유효/무효 투표 현황</div>
+                    <div className="chart-container">
+                        <canvas ref={canvasRef}></canvas>
+                    </div>
+                </div>
+            );
+        }
+
+        function ReliabilityChart({ candidateTotals, selectedCandidates }) {
+            return (
+                <div className="chart-card">
+                    <div className="chart-title">후보자별 득표 신뢰도 분석</div>
+                    <div className="chart-container">
+                        <div className="reliability-bars">
+                            {CANDIDATES.filter(c => selectedCandidates.includes(c.name)).map(candidate => {
+                                const totals = candidateTotals[candidate.name];
+                                const sortedRate = totals.total > 0 ? (totals.sorted / totals.total * 100).toFixed(1) : "0.0";
+                                const reconfirmRate = totals.total > 0 ? (totals.reconfirm / totals.total * 100).toFixed(1) : "0.0";
+
+                                return (
+                                    <div key={candidate.name} className="reliability-item">
+                                        <div className="reliability-header">
+                                            <div className="reliability-name" style={{ color: candidate.color }}>
+                                                {candidate.name}
+                                            </div>
+                                            <div className="reliability-stats">
+                                                분류: {sortedRate}% | 재확인: {reconfirmRate}%
+                                            </div>
+                                        </div>
+                                        <div className="reliability-bar-container">
+                                            <div
+                                                className="reliability-bar"
+                                                style={{
+                                                    width: `${sortedRate}%`,
+                                                    background: `linear-gradient(90deg, ${candidate.color}, ${candidate.color}dd)`
+                                                }}
+                                            >
+                                                {sortedRate}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        {selectedCandidates.length === 0 && (
+                            <div className="empty-state">
+                                <div className="empty-icon">📊</div>
+                                <div className="empty-message">선택된 후보자가 없습니다</div>
+                                <div className="empty-hint">위에서 후보자를 선택해주세요</div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function DataTable({ data, selectedCandidates, candidateTotals, onExport }) {
+            const totals = useMemo(() => {
+                return {
+                    valid: data.reduce((sum, d) => sum + d.valid_votes, 0),
+                    invalid: data.reduce((sum, d) => sum + d.invalid_votes, 0),
+                    total: data.reduce((sum, d) => sum + d.total_votes, 0)
+                };
+            }, [data]);
+
+            return (
+                <div className="table-container">
+                    <div className="table-header">
+                        <div className="chart-title">상세 심사·집계표</div>
+                        <button
+                            className="btn btn-export"
+                            onClick={onExport}
+                            disabled={selectedCandidates.length === 0}
+                        >
+                            📥 CSV 내보내기
+                        </button>
+                    </div>
+
+                    {selectedCandidates.length === 0 ? (
+                        <div className="empty-state">
+                            <div className="empty-icon">📋</div>
+                            <div className="empty-message">선택된 후보자가 없습니다</div>
+                            <div className="empty-hint">후보자를 선택하면 상세 데이터를 확인할 수 있습니다</div>
+                        </div>
+                    ) : (
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th rowSpan="2">투표구</th>
+                                    <th rowSpan="2">유형</th>
+                                    <th rowSpan="2">유효투표</th>
+                                    <th rowSpan="2">무효투표</th>
+                                    <th rowSpan="2">전체투표</th>
+                                    {selectedCandidates.map(name => (
+                                        <th
+                                            key={name}
+                                            colSpan="3"
+                                            className="candidate-header"
+                                            style={{ color: CANDIDATES.find(c => c.name === name)?.color }}
+                                        >
+                                            {name}
+                                        </th>
+                                    ))}
+                                </tr>
+                                <tr>
+                                    {selectedCandidates.map(name => (
+                                        <React.Fragment key={name}>
+                                            <th className="subheader">분류</th>
+                                            <th className="subheader">재확인</th>
+                                            <th className="subheader">계</th>
+                                        </React.Fragment>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data.map((district, idx) => (
+                                    <tr key={idx}>
+                                        <td>{district.district_name}</td>
+                                        <td>{district.vote_type}</td>
+                                        <td className="number">{district.valid_votes.toLocaleString()}</td>
+                                        <td className="number">{district.invalid_votes.toLocaleString()}</td>
+                                        <td className="number">{district.total_votes.toLocaleString()}</td>
+                                        {selectedCandidates.map(name => {
+                                            const cand = district.candidates.find(c => c.name === name);
+                                            return (
+                                                <React.Fragment key={name}>
+                                                    <td className="candidate-cell number">
+                                                        {cand ? cand.sorted_votes.toLocaleString() : '0'}
+                                                    </td>
+                                                    <td className="candidate-cell number">
+                                                        {cand ? cand.reconfirm_votes.toLocaleString() : '0'}
+                                                    </td>
+                                                    <td className="candidate-cell number">
+                                                        {cand ? cand.total.toLocaleString() : '0'}
+                                                    </td>
+                                                </React.Fragment>
+                                            );
+                                        })}
+                                    </tr>
+                                ))}
+                                <tr className="totals-row">
+                                    <td colSpan="2">합계</td>
+                                    <td className="number">{totals.valid.toLocaleString()}</td>
+                                    <td className="number">{totals.invalid.toLocaleString()}</td>
+                                    <td className="number">{totals.total.toLocaleString()}</td>
+                                    {selectedCandidates.map(name => {
+                                        const t = candidateTotals[name];
+                                        return (
+                                            <React.Fragment key={name}>
+                                                <td className="candidate-cell number">{t.sorted.toLocaleString()}</td>
+                                                <td className="candidate-cell number">{t.reconfirm.toLocaleString()}</td>
+                                                <td className="candidate-cell number">{t.total.toLocaleString()}</td>
+                                            </React.Fragment>
+                                        );
+                                    })}
+                                </tr>
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<Dashboard />);
+    </script>
+</body>
+
+</html>

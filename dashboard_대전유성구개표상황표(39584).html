@@ -1,0 +1,5270 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>대전유성구개표상황표(39584) 개표상황표 분석 대시보드</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #141932;
+            --bg-card: #1a1f3a;
+            --text-primary: #e8eaf0;
+            --text-secondary: #a0a8c0;
+            --accent-blue: #4f9eff;
+            --accent-cyan: #00d4ff;
+            --border-color: #2a3150;
+            --success: #00e676;
+            --warning: #ffab00;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem;
+            background-attachment: fixed;
+        }
+
+        .dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border-color);
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 300;
+        }
+
+        .filter-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .filter-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(79, 158, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .btn-export {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 230, 118, 0.4);
+        }
+
+        .candidates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .candidate-checkbox {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .candidate-checkbox:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(79, 158, 255, 0.2);
+        }
+
+        .candidate-checkbox.selected {
+            border-width: 2px;
+            background: linear-gradient(135deg, rgba(79, 158, 255, 0.1), rgba(0, 212, 255, 0.1));
+        }
+
+        .candidate-checkbox.selected::before {
+            content: '✓';
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 28px;
+            height: 28px;
+            background: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .candidate-checkbox input {
+            display: none;
+        }
+
+        .candidate-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .candidate-stats {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .candidate-stats div {
+            margin-top: 0.3rem;
+        }
+
+        .selection-info {
+            text-align: center;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(79, 158, 255, 0.1);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--accent-cyan);
+        }
+
+        .chart-container {
+            height: 400px;
+            position: relative;
+        }
+
+        .reliability-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .reliability-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .reliability-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .reliability-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .reliability-stats {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .reliability-bar-container {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            height: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .reliability-bar {
+            height: 100%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            padding: 0 0.8rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: white;
+            position: relative;
+        }
+
+        .reliability-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .table-container {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow-x: auto;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.9rem;
+        }
+
+        thead {
+            background: var(--bg-secondary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 1rem 0.8rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        th.candidate-header {
+            background: var(--bg-secondary);
+            text-align: center;
+            border-left: 1px solid var(--border-color);
+        }
+
+        th.subheader {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            padding: 0.6rem 0.5rem;
+        }
+
+        tbody tr {
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: rgba(79, 158, 255, 0.05);
+        }
+
+        tbody tr.totals-row {
+            background: linear-gradient(135deg, rgba(79, 158, 255, 0.15), rgba(0, 212, 255, 0.15));
+            font-weight: 700;
+        }
+
+        td {
+            padding: 0.9rem 0.8rem;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        td.number {
+            font-family: 'JetBrains Mono', monospace;
+            text-align: right;
+        }
+
+        td.candidate-cell {
+            border-left: 1px solid var(--border-color);
+            text-align: right;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-message {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-hint {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .candidates-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .button-group {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // Sample data embedded
+        const VOTING_DATA = [
+    {
+        "id": 2,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 1",
+        "vote_type": "관내투표",
+        "valid_votes": 1378,
+        "invalid_votes": 0,
+        "total_votes": 1378,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 456,
+                "reconfirm_votes": 13,
+                "total": 469
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 759,
+                "reconfirm_votes": 23,
+                "total": 782
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 107,
+                "reconfirm_votes": 3,
+                "total": 110
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 1,
+                "total": 13
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 3,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 2",
+        "vote_type": "관내투표",
+        "valid_votes": 1645,
+        "invalid_votes": 0,
+        "total_votes": 1645,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 626,
+                "reconfirm_votes": 18,
+                "total": 644
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 725,
+                "reconfirm_votes": 23,
+                "total": 748
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 134,
+                "reconfirm_votes": 35,
+                "total": 169
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 13,
+                "reconfirm_votes": 13,
+                "total": 26
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 57,
+                "total": 58
+            }
+        ]
+    },
+    {
+        "id": 4,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 3",
+        "vote_type": "관내투표",
+        "valid_votes": 1527,
+        "invalid_votes": 0,
+        "total_votes": 1527,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 599,
+                "reconfirm_votes": 17,
+                "total": 616
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 731,
+                "reconfirm_votes": 23,
+                "total": 754
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 121,
+                "reconfirm_votes": 2,
+                "total": 123
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 17,
+                "reconfirm_votes": 17,
+                "total": 34
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 5,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 4",
+        "vote_type": "관내투표",
+        "valid_votes": 1090,
+        "invalid_votes": 0,
+        "total_votes": 1090,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 353,
+                "reconfirm_votes": 5,
+                "total": 358
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 584,
+                "reconfirm_votes": 8,
+                "total": 592
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 110,
+                "reconfirm_votes": 4,
+                "total": 114
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 13,
+                "reconfirm_votes": 13,
+                "total": 26
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 6,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 5",
+        "vote_type": "관내투표",
+        "valid_votes": 217,
+        "invalid_votes": 0,
+        "total_votes": 217,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 62,
+                "reconfirm_votes": 2,
+                "total": 64
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 136,
+                "reconfirm_votes": 2,
+                "total": 138
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 12,
+                "reconfirm_votes": 1,
+                "total": 13
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 7,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 6",
+        "vote_type": "관내투표",
+        "valid_votes": 328,
+        "invalid_votes": 0,
+        "total_votes": 328,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 89,
+                "reconfirm_votes": 4,
+                "total": 93
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 186,
+                "reconfirm_votes": 11,
+                "total": 197
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 15,
+                "reconfirm_votes": 15,
+                "total": 30
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 8,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 7",
+        "vote_type": "관내투표",
+        "valid_votes": 1884,
+        "invalid_votes": 0,
+        "total_votes": 1884,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 887,
+                "reconfirm_votes": 0,
+                "total": 887
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 845,
+                "reconfirm_votes": 19,
+                "total": 864
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 111,
+                "reconfirm_votes": 0,
+                "total": 111
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 13,
+                "reconfirm_votes": 9,
+                "total": 22
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 9,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 8",
+        "vote_type": "관내투표",
+        "valid_votes": 1784,
+        "invalid_votes": 0,
+        "total_votes": 1784,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 756,
+                "reconfirm_votes": 7,
+                "total": 763
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 814,
+                "reconfirm_votes": 13,
+                "total": 827
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 143,
+                "reconfirm_votes": 1,
+                "total": 144
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 22,
+                "reconfirm_votes": 22,
+                "total": 44
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 10,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 9",
+        "vote_type": "관내투표",
+        "valid_votes": 2190,
+        "invalid_votes": 0,
+        "total_votes": 2190,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 720,
+                "reconfirm_votes": 9,
+                "total": 729
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1044,
+                "reconfirm_votes": 21,
+                "total": 1065
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 183,
+                "reconfirm_votes": 183,
+                "total": 366
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 15,
+                "reconfirm_votes": 15,
+                "total": 30
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 11,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 10",
+        "vote_type": "관내투표",
+        "valid_votes": 1597,
+        "invalid_votes": 0,
+        "total_votes": 1597,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 646,
+                "reconfirm_votes": 5,
+                "total": 651
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 761,
+                "reconfirm_votes": 0,
+                "total": 761
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 152,
+                "reconfirm_votes": 1,
+                "total": 153
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 14,
+                "reconfirm_votes": 14,
+                "total": 28
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 12,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 11",
+        "vote_type": "관내투표",
+        "valid_votes": 1556,
+        "invalid_votes": 0,
+        "total_votes": 1556,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 485,
+                "reconfirm_votes": 4,
+                "total": 489
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 796,
+                "reconfirm_votes": 10,
+                "total": 806
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 242,
+                "reconfirm_votes": 1,
+                "total": 243
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 7,
+                "reconfirm_votes": 7,
+                "total": 14
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 13,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 12",
+        "vote_type": "관내투표",
+        "valid_votes": 1722,
+        "invalid_votes": 0,
+        "total_votes": 1722,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 530,
+                "reconfirm_votes": 6,
+                "total": 536
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1011,
+                "reconfirm_votes": 16,
+                "total": 1027
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 123,
+                "reconfirm_votes": 2,
+                "total": 125
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 21,
+                "reconfirm_votes": 4,
+                "total": 25
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 5,
+                "total": 9
+            }
+        ]
+    },
+    {
+        "id": 14,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 13",
+        "vote_type": "관내투표",
+        "valid_votes": 2171,
+        "invalid_votes": 0,
+        "total_votes": 2171,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 854,
+                "reconfirm_votes": 17,
+                "total": 871
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1049,
+                "reconfirm_votes": 22,
+                "total": 1071
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 178,
+                "reconfirm_votes": 3,
+                "total": 181
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 21,
+                "reconfirm_votes": 21,
+                "total": 42
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 15,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 14",
+        "vote_type": "관내투표",
+        "valid_votes": 2198,
+        "invalid_votes": 0,
+        "total_votes": 2198,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 839,
+                "reconfirm_votes": 13,
+                "total": 852
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1085,
+                "reconfirm_votes": 0,
+                "total": 1085
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 206,
+                "reconfirm_votes": 1,
+                "total": 207
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 25,
+                "reconfirm_votes": 25,
+                "total": 50
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 16,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 15",
+        "vote_type": "관내투표",
+        "valid_votes": 2462,
+        "invalid_votes": 0,
+        "total_votes": 2462,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 913,
+                "reconfirm_votes": 11,
+                "total": 924
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1239,
+                "reconfirm_votes": 17,
+                "total": 1256
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 229,
+                "reconfirm_votes": 7,
+                "total": 236
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 22,
+                "reconfirm_votes": 22,
+                "total": 44
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 17,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 16",
+        "vote_type": "관내투표",
+        "valid_votes": 2095,
+        "invalid_votes": 0,
+        "total_votes": 2095,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 838,
+                "reconfirm_votes": 14,
+                "total": 852
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 991,
+                "reconfirm_votes": 33,
+                "total": 1024
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 171,
+                "reconfirm_votes": 4,
+                "total": 175
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 20,
+                "reconfirm_votes": 20,
+                "total": 40
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 18,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 17",
+        "vote_type": "관내투표",
+        "valid_votes": 2351,
+        "invalid_votes": 0,
+        "total_votes": 2351,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 998,
+                "reconfirm_votes": 10,
+                "total": 1008
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1013,
+                "reconfirm_votes": 11,
+                "total": 1024
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 266,
+                "reconfirm_votes": 4,
+                "total": 270
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 22,
+                "reconfirm_votes": 22,
+                "total": 44
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 1,
+                "total": 5
+            }
+        ]
+    },
+    {
+        "id": 19,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 18",
+        "vote_type": "관내투표",
+        "valid_votes": 1621,
+        "invalid_votes": 0,
+        "total_votes": 1621,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 614,
+                "reconfirm_votes": 10,
+                "total": 624
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 813,
+                "reconfirm_votes": 20,
+                "total": 833
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 143,
+                "reconfirm_votes": 3,
+                "total": 146
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 17,
+                "reconfirm_votes": 1,
+                "total": 18
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 20,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 19",
+        "vote_type": "관내투표",
+        "valid_votes": 2168,
+        "invalid_votes": 0,
+        "total_votes": 2168,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 816,
+                "reconfirm_votes": 6,
+                "total": 822
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1067,
+                "reconfirm_votes": 22,
+                "total": 1089
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 223,
+                "reconfirm_votes": 2,
+                "total": 225
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 30,
+                "reconfirm_votes": 0,
+                "total": 30
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 21,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 20",
+        "vote_type": "관내투표",
+        "valid_votes": 2292,
+        "invalid_votes": 0,
+        "total_votes": 2292,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 700,
+                "reconfirm_votes": 6,
+                "total": 706
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1316,
+                "reconfirm_votes": 15,
+                "total": 1331
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 189,
+                "reconfirm_votes": 2,
+                "total": 191
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 32,
+                "reconfirm_votes": 32,
+                "total": 64
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 22,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 21",
+        "vote_type": "관내투표",
+        "valid_votes": 3097,
+        "invalid_votes": 0,
+        "total_votes": 3097,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1232,
+                "reconfirm_votes": 18,
+                "total": 1250
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1465,
+                "reconfirm_votes": 22,
+                "total": 1487
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 301,
+                "reconfirm_votes": 3,
+                "total": 304
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 28,
+                "reconfirm_votes": 28,
+                "total": 56
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 23,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 22",
+        "vote_type": "관내투표",
+        "valid_votes": 2100,
+        "invalid_votes": 0,
+        "total_votes": 2100,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 698,
+                "reconfirm_votes": 16,
+                "total": 714
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1100,
+                "reconfirm_votes": 33,
+                "total": 1133
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 222,
+                "reconfirm_votes": 5,
+                "total": 227
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 23,
+                "reconfirm_votes": 1,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 24,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 23",
+        "vote_type": "관내투표",
+        "valid_votes": 2153,
+        "invalid_votes": 0,
+        "total_votes": 2153,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 655,
+                "reconfirm_votes": 8,
+                "total": 663
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1219,
+                "reconfirm_votes": 37,
+                "total": 1256
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 185,
+                "reconfirm_votes": 3,
+                "total": 188
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 19,
+                "reconfirm_votes": 20,
+                "total": 39
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 4,
+                "total": 7
+            }
+        ]
+    },
+    {
+        "id": 25,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 24",
+        "vote_type": "관내투표",
+        "valid_votes": 2022,
+        "invalid_votes": 0,
+        "total_votes": 2022,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 570,
+                "reconfirm_votes": 6,
+                "total": 576
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1140,
+                "reconfirm_votes": 28,
+                "total": 1168
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 245,
+                "reconfirm_votes": 2,
+                "total": 247
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 15,
+                "reconfirm_votes": 15,
+                "total": 30
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 26,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 25",
+        "vote_type": "관내투표",
+        "valid_votes": 2161,
+        "invalid_votes": 0,
+        "total_votes": 2161,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 725,
+                "reconfirm_votes": 7,
+                "total": 732
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 940,
+                "reconfirm_votes": 15,
+                "total": 955
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 391,
+                "reconfirm_votes": 7,
+                "total": 398
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 36,
+                "reconfirm_votes": 36,
+                "total": 72
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 27,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 26",
+        "vote_type": "관내투표",
+        "valid_votes": 2292,
+        "invalid_votes": 0,
+        "total_votes": 2292,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 480,
+                "reconfirm_votes": 489,
+                "total": 969
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 787,
+                "reconfirm_votes": 10,
+                "total": 797
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 243,
+                "reconfirm_votes": 243,
+                "total": 486
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 20,
+                "reconfirm_votes": 20,
+                "total": 40
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 28,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 27",
+        "vote_type": "관내투표",
+        "valid_votes": 1674,
+        "invalid_votes": 0,
+        "total_votes": 1674,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 577,
+                "reconfirm_votes": 13,
+                "total": 590
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 867,
+                "reconfirm_votes": 23,
+                "total": 890
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 166,
+                "reconfirm_votes": 0,
+                "total": 166
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 13,
+                "reconfirm_votes": 13,
+                "total": 26
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 29,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 28",
+        "vote_type": "관내투표",
+        "valid_votes": 1694,
+        "invalid_votes": 0,
+        "total_votes": 1694,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 579,
+                "reconfirm_votes": 11,
+                "total": 590
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 948,
+                "reconfirm_votes": 0,
+                "total": 948
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 134,
+                "reconfirm_votes": 2,
+                "total": 136
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 19,
+                "reconfirm_votes": 1,
+                "total": 20
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 30,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 29",
+        "vote_type": "관내투표",
+        "valid_votes": 2159,
+        "invalid_votes": 0,
+        "total_votes": 2159,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 550,
+                "reconfirm_votes": 13,
+                "total": 563
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1032,
+                "reconfirm_votes": 14,
+                "total": 1046
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 474,
+                "reconfirm_votes": 6,
+                "total": 480
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 33,
+                "reconfirm_votes": 33,
+                "total": 66
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 31,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 30",
+        "vote_type": "관내투표",
+        "valid_votes": 1310,
+        "invalid_votes": 0,
+        "total_votes": 1310,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 352,
+                "reconfirm_votes": 6,
+                "total": 358
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 642,
+                "reconfirm_votes": 17,
+                "total": 659
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 129,
+                "reconfirm_votes": 129,
+                "total": 258
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 17,
+                "reconfirm_votes": 17,
+                "total": 34
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 32,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 31",
+        "vote_type": "관내투표",
+        "valid_votes": 1403,
+        "invalid_votes": 0,
+        "total_votes": 1403,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 512,
+                "reconfirm_votes": 3,
+                "total": 515
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 702,
+                "reconfirm_votes": 9,
+                "total": 711
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 147,
+                "reconfirm_votes": 0,
+                "total": 147
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 30,
+                "reconfirm_votes": 0,
+                "total": 30
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 33,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 32",
+        "vote_type": "관내투표",
+        "valid_votes": 1578,
+        "invalid_votes": 0,
+        "total_votes": 1578,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 553,
+                "reconfirm_votes": 5,
+                "total": 558
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 744,
+                "reconfirm_votes": 17,
+                "total": 761
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 213,
+                "reconfirm_votes": 3,
+                "total": 216
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 20,
+                "reconfirm_votes": 20,
+                "total": 40
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 0,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 34,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 33",
+        "vote_type": "관내투표",
+        "valid_votes": 2248,
+        "invalid_votes": 0,
+        "total_votes": 2248,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 777,
+                "reconfirm_votes": 6,
+                "total": 783
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1147,
+                "reconfirm_votes": 16,
+                "total": 1163
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 247,
+                "reconfirm_votes": 3,
+                "total": 250
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 22,
+                "reconfirm_votes": 22,
+                "total": 44
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 4,
+                "total": 8
+            }
+        ]
+    },
+    {
+        "id": 35,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 34",
+        "vote_type": "관내투표",
+        "valid_votes": 2137,
+        "invalid_votes": 0,
+        "total_votes": 2137,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 805,
+                "reconfirm_votes": 7,
+                "total": 812
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 804,
+                "reconfirm_votes": 15,
+                "total": 819
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 228,
+                "reconfirm_votes": 228,
+                "total": 456
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 25,
+                "reconfirm_votes": 25,
+                "total": 50
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 36,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 35",
+        "vote_type": "관내투표",
+        "valid_votes": 1963,
+        "invalid_votes": 0,
+        "total_votes": 1963,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 762,
+                "reconfirm_votes": 11,
+                "total": 773
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 892,
+                "reconfirm_votes": 11,
+                "total": 903
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 266,
+                "reconfirm_votes": 2,
+                "total": 268
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 14,
+                "reconfirm_votes": 1,
+                "total": 15
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 37,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 36",
+        "vote_type": "관내투표",
+        "valid_votes": 1673,
+        "invalid_votes": 0,
+        "total_votes": 1673,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 752,
+                "reconfirm_votes": 6,
+                "total": 758
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 685,
+                "reconfirm_votes": 8,
+                "total": 693
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 194,
+                "reconfirm_votes": 2,
+                "total": 196
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 13,
+                "reconfirm_votes": 13,
+                "total": 26
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 38,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 37",
+        "vote_type": "관내투표",
+        "valid_votes": 1511,
+        "invalid_votes": 0,
+        "total_votes": 1511,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 552,
+                "reconfirm_votes": 6,
+                "total": 558
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 683,
+                "reconfirm_votes": 14,
+                "total": 697
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 222,
+                "reconfirm_votes": 7,
+                "total": 229
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 20,
+                "reconfirm_votes": 1,
+                "total": 21
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 39,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 38",
+        "vote_type": "관내투표",
+        "valid_votes": 1795,
+        "invalid_votes": 0,
+        "total_votes": 1795,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 697,
+                "reconfirm_votes": 4,
+                "total": 701
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 847,
+                "reconfirm_votes": 18,
+                "total": 865
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 170,
+                "reconfirm_votes": 3,
+                "total": 173
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 24,
+                "reconfirm_votes": 24,
+                "total": 48
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 4,
+                "total": 8
+            }
+        ]
+    },
+    {
+        "id": 40,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 39",
+        "vote_type": "관내투표",
+        "valid_votes": 2149,
+        "invalid_votes": 0,
+        "total_votes": 2149,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 863,
+                "reconfirm_votes": 0,
+                "total": 863
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1024,
+                "reconfirm_votes": 0,
+                "total": 1024
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 202,
+                "reconfirm_votes": 2,
+                "total": 204
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 28,
+                "reconfirm_votes": 28,
+                "total": 56
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 0,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 41,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 40",
+        "vote_type": "관내투표",
+        "valid_votes": 1860,
+        "invalid_votes": 0,
+        "total_votes": 1860,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 583,
+                "reconfirm_votes": 16,
+                "total": 599
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1101,
+                "reconfirm_votes": 14,
+                "total": 1115
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 112,
+                "reconfirm_votes": 3,
+                "total": 115
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 15,
+                "reconfirm_votes": 16,
+                "total": 31
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 42,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 41",
+        "vote_type": "관내투표",
+        "valid_votes": 2264,
+        "invalid_votes": 0,
+        "total_votes": 2264,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 936,
+                "reconfirm_votes": 8,
+                "total": 944
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1056,
+                "reconfirm_votes": 0,
+                "total": 1056
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 201,
+                "reconfirm_votes": 7,
+                "total": 208
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 25,
+                "reconfirm_votes": 25,
+                "total": 50
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 5,
+                "reconfirm_votes": 1,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 43,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 42",
+        "vote_type": "관내투표",
+        "valid_votes": 2363,
+        "invalid_votes": 0,
+        "total_votes": 2363,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1024,
+                "reconfirm_votes": 11,
+                "total": 1035
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1031,
+                "reconfirm_votes": 0,
+                "total": 1031
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 204,
+                "reconfirm_votes": 5,
+                "total": 209
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 44,
+                "reconfirm_votes": 44,
+                "total": 88
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 44,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 43",
+        "vote_type": "관내투표",
+        "valid_votes": 1577,
+        "invalid_votes": 0,
+        "total_votes": 1577,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 627,
+                "reconfirm_votes": 0,
+                "total": 627
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 803,
+                "reconfirm_votes": 0,
+                "total": 803
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 133,
+                "reconfirm_votes": 0,
+                "total": 133
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 14,
+                "reconfirm_votes": 0,
+                "total": 14
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 45,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 44",
+        "vote_type": "관내투표",
+        "valid_votes": 1663,
+        "invalid_votes": 0,
+        "total_votes": 1663,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 579,
+                "reconfirm_votes": 9,
+                "total": 588
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 884,
+                "reconfirm_votes": 20,
+                "total": 904
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 142,
+                "reconfirm_votes": 1,
+                "total": 143
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 23,
+                "reconfirm_votes": 1,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 46,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 45",
+        "vote_type": "관내투표",
+        "valid_votes": 1203,
+        "invalid_votes": 0,
+        "total_votes": 1203,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 569,
+                "reconfirm_votes": 7,
+                "total": 576
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 467,
+                "reconfirm_votes": 5,
+                "total": 472
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 104,
+                "reconfirm_votes": 1,
+                "total": 105
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 24,
+                "reconfirm_votes": 24,
+                "total": 48
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 47,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 46",
+        "vote_type": "관내투표",
+        "valid_votes": 1715,
+        "invalid_votes": 0,
+        "total_votes": 1715,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 800,
+                "reconfirm_votes": 9,
+                "total": 809
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 705,
+                "reconfirm_votes": 12,
+                "total": 717
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 151,
+                "reconfirm_votes": 2,
+                "total": 153
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 15,
+                "reconfirm_votes": 15,
+                "total": 30
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 48,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 47",
+        "vote_type": "관내투표",
+        "valid_votes": 2211,
+        "invalid_votes": 0,
+        "total_votes": 2211,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 869,
+                "reconfirm_votes": 11,
+                "total": 880
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1066,
+                "reconfirm_votes": 22,
+                "total": 1088
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 173,
+                "reconfirm_votes": 6,
+                "total": 179
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 29,
+                "reconfirm_votes": 29,
+                "total": 58
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 49,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 48",
+        "vote_type": "관내투표",
+        "valid_votes": 1514,
+        "invalid_votes": 0,
+        "total_votes": 1514,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 633,
+                "reconfirm_votes": 6,
+                "total": 639
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 672,
+                "reconfirm_votes": 22,
+                "total": 694
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 139,
+                "reconfirm_votes": 2,
+                "total": 141
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 19,
+                "reconfirm_votes": 19,
+                "total": 38
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 50,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 49",
+        "vote_type": "관내투표",
+        "valid_votes": 1603,
+        "invalid_votes": 0,
+        "total_votes": 1603,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 604,
+                "reconfirm_votes": 2,
+                "total": 606
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 823,
+                "reconfirm_votes": 15,
+                "total": 838
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 140,
+                "reconfirm_votes": 1,
+                "total": 141
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 9,
+                "reconfirm_votes": 9,
+                "total": 18
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 51,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 50",
+        "vote_type": "관내투표",
+        "valid_votes": 2053,
+        "invalid_votes": 0,
+        "total_votes": 2053,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 950,
+                "reconfirm_votes": 8,
+                "total": 958
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 859,
+                "reconfirm_votes": 8,
+                "total": 867
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 186,
+                "reconfirm_votes": 2,
+                "total": 188
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 18,
+                "reconfirm_votes": 18,
+                "total": 36
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 52,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 51",
+        "vote_type": "관내투표",
+        "valid_votes": 1273,
+        "invalid_votes": 0,
+        "total_votes": 1273,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 585,
+                "reconfirm_votes": 9,
+                "total": 594
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 529,
+                "reconfirm_votes": 14,
+                "total": 543
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 104,
+                "reconfirm_votes": 2,
+                "total": 106
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 14,
+                "reconfirm_votes": 14,
+                "total": 28
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 53,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 52",
+        "vote_type": "관내투표",
+        "valid_votes": 1825,
+        "invalid_votes": 0,
+        "total_votes": 1825,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 814,
+                "reconfirm_votes": 6,
+                "total": 820
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 698,
+                "reconfirm_votes": 0,
+                "total": 698
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 130,
+                "reconfirm_votes": 131,
+                "total": 261
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 20,
+                "reconfirm_votes": 20,
+                "total": 40
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 54,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 53",
+        "vote_type": "관내투표",
+        "valid_votes": 2196,
+        "invalid_votes": 0,
+        "total_votes": 2196,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 539,
+                "reconfirm_votes": 546,
+                "total": 1085
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 745,
+                "reconfirm_votes": 14,
+                "total": 759
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 154,
+                "reconfirm_votes": 155,
+                "total": 309
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 20,
+                "reconfirm_votes": 20,
+                "total": 40
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 2,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 55,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 54",
+        "vote_type": "관내투표",
+        "valid_votes": 931,
+        "invalid_votes": 0,
+        "total_votes": 931,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 266,
+                "reconfirm_votes": 4,
+                "total": 270
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 461,
+                "reconfirm_votes": 16,
+                "total": 477
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 163,
+                "reconfirm_votes": 3,
+                "total": 166
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 9,
+                "reconfirm_votes": 9,
+                "total": 18
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 56,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 55",
+        "vote_type": "관내투표",
+        "valid_votes": 2326,
+        "invalid_votes": 0,
+        "total_votes": 2326,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 819,
+                "reconfirm_votes": 5,
+                "total": 824
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1140,
+                "reconfirm_votes": 16,
+                "total": 1156
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 285,
+                "reconfirm_votes": 2,
+                "total": 287
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 29,
+                "reconfirm_votes": 29,
+                "total": 58
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 57,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 56",
+        "vote_type": "관내투표",
+        "valid_votes": 1752,
+        "invalid_votes": 0,
+        "total_votes": 1752,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 627,
+                "reconfirm_votes": 0,
+                "total": 627
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 809,
+                "reconfirm_votes": 0,
+                "total": 809
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 287,
+                "reconfirm_votes": 0,
+                "total": 287
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 26,
+                "reconfirm_votes": 0,
+                "total": 26
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 0,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 58,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 57",
+        "vote_type": "관내투표",
+        "valid_votes": 1428,
+        "invalid_votes": 0,
+        "total_votes": 1428,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 519,
+                "reconfirm_votes": 9,
+                "total": 528
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 756,
+                "reconfirm_votes": 11,
+                "total": 767
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 120,
+                "reconfirm_votes": 1,
+                "total": 121
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 11,
+                "reconfirm_votes": 1,
+                "total": 12
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 59,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 58",
+        "vote_type": "관내투표",
+        "valid_votes": 1236,
+        "invalid_votes": 0,
+        "total_votes": 1236,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 344,
+                "reconfirm_votes": 1,
+                "total": 345
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 704,
+                "reconfirm_votes": 7,
+                "total": 711
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 160,
+                "reconfirm_votes": 1,
+                "total": 161
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 9,
+                "reconfirm_votes": 9,
+                "total": 18
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 60,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 59",
+        "vote_type": "관내투표",
+        "valid_votes": 1846,
+        "invalid_votes": 0,
+        "total_votes": 1846,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 435,
+                "reconfirm_votes": 6,
+                "total": 441
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1135,
+                "reconfirm_votes": 19,
+                "total": 1154
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 213,
+                "reconfirm_votes": 4,
+                "total": 217
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 17,
+                "reconfirm_votes": 17,
+                "total": 34
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 61,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 60",
+        "vote_type": "관내투표",
+        "valid_votes": 1344,
+        "invalid_votes": 0,
+        "total_votes": 1344,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 506,
+                "reconfirm_votes": 10,
+                "total": 516
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 626,
+                "reconfirm_votes": 9,
+                "total": 635
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 160,
+                "reconfirm_votes": 1,
+                "total": 161
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 16,
+                "reconfirm_votes": 16,
+                "total": 32
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 62,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 61",
+        "vote_type": "관내투표",
+        "valid_votes": 1692,
+        "invalid_votes": 0,
+        "total_votes": 1692,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 498,
+                "reconfirm_votes": 7,
+                "total": 505
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 824,
+                "reconfirm_votes": 12,
+                "total": 836
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 299,
+                "reconfirm_votes": 4,
+                "total": 303
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 22,
+                "reconfirm_votes": 22,
+                "total": 44
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 63,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 62",
+        "vote_type": "관내투표",
+        "valid_votes": 1451,
+        "invalid_votes": 0,
+        "total_votes": 1451,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 583,
+                "reconfirm_votes": 0,
+                "total": 583
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 715,
+                "reconfirm_votes": 0,
+                "total": 715
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 132,
+                "reconfirm_votes": 0,
+                "total": 132
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 18,
+                "reconfirm_votes": 0,
+                "total": 18
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 0,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 64,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 63",
+        "vote_type": "관내투표",
+        "valid_votes": 1552,
+        "invalid_votes": 0,
+        "total_votes": 1552,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 631,
+                "reconfirm_votes": 8,
+                "total": 639
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 763,
+                "reconfirm_votes": 17,
+                "total": 780
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 113,
+                "reconfirm_votes": 1,
+                "total": 114
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 17,
+                "reconfirm_votes": 0,
+                "total": 17
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 0,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 65,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 64",
+        "vote_type": "관내투표",
+        "valid_votes": 1874,
+        "invalid_votes": 0,
+        "total_votes": 1874,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 710,
+                "reconfirm_votes": 5,
+                "total": 715
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 924,
+                "reconfirm_votes": 12,
+                "total": 936
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 167,
+                "reconfirm_votes": 2,
+                "total": 169
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 26,
+                "reconfirm_votes": 27,
+                "total": 53
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 66,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 65",
+        "vote_type": "관내투표",
+        "valid_votes": 1737,
+        "invalid_votes": 0,
+        "total_votes": 1737,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 772,
+                "reconfirm_votes": 3,
+                "total": 775
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 672,
+                "reconfirm_votes": 3,
+                "total": 675
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 271,
+                "reconfirm_votes": 0,
+                "total": 271
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 14,
+                "reconfirm_votes": 0,
+                "total": 14
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 0,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 67,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 66",
+        "vote_type": "관내투표",
+        "valid_votes": 1662,
+        "invalid_votes": 0,
+        "total_votes": 1662,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 557,
+                "reconfirm_votes": 13,
+                "total": 570
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 759,
+                "reconfirm_votes": 28,
+                "total": 787
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 258,
+                "reconfirm_votes": 4,
+                "total": 262
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 21,
+                "reconfirm_votes": 21,
+                "total": 42
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 68,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 67",
+        "vote_type": "관내투표",
+        "valid_votes": 169,
+        "invalid_votes": 0,
+        "total_votes": 169,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 36,
+                "reconfirm_votes": 4,
+                "total": 40
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 111,
+                "reconfirm_votes": 0,
+                "total": 111
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 8,
+                "reconfirm_votes": 8,
+                "total": 16
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 69,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 68",
+        "vote_type": "관내투표",
+        "valid_votes": 2064,
+        "invalid_votes": 0,
+        "total_votes": 2064,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 983,
+                "reconfirm_votes": 11,
+                "total": 994
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 800,
+                "reconfirm_votes": 17,
+                "total": 817
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 187,
+                "reconfirm_votes": 4,
+                "total": 191
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 25,
+                "reconfirm_votes": 25,
+                "total": 50
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 6,
+                "reconfirm_votes": 6,
+                "total": 12
+            }
+        ]
+    },
+    {
+        "id": 70,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 69",
+        "vote_type": "관내투표",
+        "valid_votes": 1813,
+        "invalid_votes": 0,
+        "total_votes": 1813,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 803,
+                "reconfirm_votes": 16,
+                "total": 819
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 736,
+                "reconfirm_votes": 22,
+                "total": 758
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 201,
+                "reconfirm_votes": 3,
+                "total": 204
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 21,
+                "reconfirm_votes": 1,
+                "total": 22
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 5,
+                "reconfirm_votes": 5,
+                "total": 10
+            }
+        ]
+    },
+    {
+        "id": 71,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 70",
+        "vote_type": "관내투표",
+        "valid_votes": 1881,
+        "invalid_votes": 0,
+        "total_votes": 1881,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 794,
+                "reconfirm_votes": 12,
+                "total": 806
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 672,
+                "reconfirm_votes": 23,
+                "total": 695
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 167,
+                "reconfirm_votes": 168,
+                "total": 335
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 18,
+                "reconfirm_votes": 19,
+                "total": 37
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 4,
+                "total": 8
+            }
+        ]
+    },
+    {
+        "id": 72,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 71",
+        "vote_type": "관내투표",
+        "valid_votes": 2422,
+        "invalid_votes": 0,
+        "total_votes": 2422,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 991,
+                "reconfirm_votes": 21,
+                "total": 1012
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1103,
+                "reconfirm_votes": 20,
+                "total": 1123
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 209,
+                "reconfirm_votes": 5,
+                "total": 214
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 31,
+                "reconfirm_votes": 32,
+                "total": 63
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 5,
+                "reconfirm_votes": 5,
+                "total": 10
+            }
+        ]
+    },
+    {
+        "id": 73,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 72",
+        "vote_type": "관내투표",
+        "valid_votes": 2338,
+        "invalid_votes": 0,
+        "total_votes": 2338,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1103,
+                "reconfirm_votes": 5,
+                "total": 1108
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 873,
+                "reconfirm_votes": 6,
+                "total": 879
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 294,
+                "reconfirm_votes": 5,
+                "total": 299
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 20,
+                "reconfirm_votes": 20,
+                "total": 40
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 6,
+                "reconfirm_votes": 6,
+                "total": 12
+            }
+        ]
+    },
+    {
+        "id": 74,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 73",
+        "vote_type": "관내투표",
+        "valid_votes": 1747,
+        "invalid_votes": 0,
+        "total_votes": 1747,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 809,
+                "reconfirm_votes": 13,
+                "total": 822
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 686,
+                "reconfirm_votes": 13,
+                "total": 699
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 186,
+                "reconfirm_votes": 4,
+                "total": 190
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 16,
+                "reconfirm_votes": 16,
+                "total": 32
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 75,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 74",
+        "vote_type": "관내투표",
+        "valid_votes": 1907,
+        "invalid_votes": 0,
+        "total_votes": 1907,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 889,
+                "reconfirm_votes": 7,
+                "total": 896
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 777,
+                "reconfirm_votes": 12,
+                "total": 789
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 175,
+                "reconfirm_votes": 5,
+                "total": 180
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 21,
+                "reconfirm_votes": 21,
+                "total": 42
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 76,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 75",
+        "vote_type": "관내투표",
+        "valid_votes": 2003,
+        "invalid_votes": 0,
+        "total_votes": 2003,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 867,
+                "reconfirm_votes": 12,
+                "total": 879
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 844,
+                "reconfirm_votes": 16,
+                "total": 860
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 197,
+                "reconfirm_votes": 4,
+                "total": 201
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 31,
+                "reconfirm_votes": 31,
+                "total": 62
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 77,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 76",
+        "vote_type": "관내투표",
+        "valid_votes": 2732,
+        "invalid_votes": 0,
+        "total_votes": 2732,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 937,
+                "reconfirm_votes": 12,
+                "total": 949
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1408,
+                "reconfirm_votes": 22,
+                "total": 1430
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 286,
+                "reconfirm_votes": 5,
+                "total": 291
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 31,
+                "reconfirm_votes": 31,
+                "total": 62
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 78,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 77",
+        "vote_type": "관내투표",
+        "valid_votes": 2118,
+        "invalid_votes": 0,
+        "total_votes": 2118,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 752,
+                "reconfirm_votes": 8,
+                "total": 760
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 964,
+                "reconfirm_votes": 22,
+                "total": 986
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 318,
+                "reconfirm_votes": 10,
+                "total": 328
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 15,
+                "reconfirm_votes": 15,
+                "total": 30
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 7,
+                "reconfirm_votes": 7,
+                "total": 14
+            }
+        ]
+    },
+    {
+        "id": 79,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 78",
+        "vote_type": "관내투표",
+        "valid_votes": 2939,
+        "invalid_votes": 0,
+        "total_votes": 2939,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1427,
+                "reconfirm_votes": 0,
+                "total": 1427
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1074,
+                "reconfirm_votes": 5,
+                "total": 1079
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 384,
+                "reconfirm_votes": 3,
+                "total": 387
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 41,
+                "reconfirm_votes": 1,
+                "total": 42
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 80,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 79",
+        "vote_type": "관내투표",
+        "valid_votes": 3892,
+        "invalid_votes": 0,
+        "total_votes": 3892,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 2629,
+                "reconfirm_votes": 30,
+                "total": 2659
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 943,
+                "reconfirm_votes": 23,
+                "total": 966
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 235,
+                "reconfirm_votes": 2,
+                "total": 237
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 27,
+                "reconfirm_votes": 0,
+                "total": 27
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 0,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 81,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 80",
+        "vote_type": "관내투표",
+        "valid_votes": 4800,
+        "invalid_votes": 0,
+        "total_votes": 4800,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 2941,
+                "reconfirm_votes": 25,
+                "total": 2966
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1148,
+                "reconfirm_votes": 23,
+                "total": 1171
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 599,
+                "reconfirm_votes": 8,
+                "total": 607
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 48,
+                "reconfirm_votes": 1,
+                "total": 49
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 6,
+                "reconfirm_votes": 1,
+                "total": 7
+            }
+        ]
+    },
+    {
+        "id": 82,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 81",
+        "vote_type": "관내투표",
+        "valid_votes": 5782,
+        "invalid_votes": 0,
+        "total_votes": 5782,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 3763,
+                "reconfirm_votes": 52,
+                "total": 3815
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1326,
+                "reconfirm_votes": 18,
+                "total": 1344
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 527,
+                "reconfirm_votes": 4,
+                "total": 531
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 45,
+                "reconfirm_votes": 42,
+                "total": 87
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 5,
+                "reconfirm_votes": 0,
+                "total": 5
+            }
+        ]
+    },
+    {
+        "id": 83,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 82",
+        "vote_type": "관내투표",
+        "valid_votes": 3494,
+        "invalid_votes": 0,
+        "total_votes": 3494,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 2234,
+                "reconfirm_votes": 40,
+                "total": 2274
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 870,
+                "reconfirm_votes": 20,
+                "total": 890
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 292,
+                "reconfirm_votes": 6,
+                "total": 298
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 26,
+                "reconfirm_votes": 0,
+                "total": 26
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 84,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 83",
+        "vote_type": "관내투표",
+        "valid_votes": 7368,
+        "invalid_votes": 0,
+        "total_votes": 7368,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 4319,
+                "reconfirm_votes": 57,
+                "total": 4376
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1862,
+                "reconfirm_votes": 36,
+                "total": 1898
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 909,
+                "reconfirm_votes": 20,
+                "total": 929
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 79,
+                "reconfirm_votes": 77,
+                "total": 156
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 9,
+                "reconfirm_votes": 0,
+                "total": 9
+            }
+        ]
+    },
+    {
+        "id": 85,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 84",
+        "vote_type": "관내투표",
+        "valid_votes": 6119,
+        "invalid_votes": 0,
+        "total_votes": 6119,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 3373,
+                "reconfirm_votes": 28,
+                "total": 3401
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1201,
+                "reconfirm_votes": 23,
+                "total": 1224
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 1260,
+                "reconfirm_votes": 14,
+                "total": 1274
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 106,
+                "reconfirm_votes": 106,
+                "total": 212
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 4,
+                "total": 8
+            }
+        ]
+    },
+    {
+        "id": 86,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 85",
+        "vote_type": "관내투표",
+        "valid_votes": 6256,
+        "invalid_votes": 0,
+        "total_votes": 6256,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 4139,
+                "reconfirm_votes": 61,
+                "total": 4200
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1331,
+                "reconfirm_votes": 32,
+                "total": 1363
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 604,
+                "reconfirm_votes": 14,
+                "total": 618
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 73,
+                "reconfirm_votes": 2,
+                "total": 75
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 87,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 86",
+        "vote_type": "관내투표",
+        "valid_votes": 3540,
+        "invalid_votes": 0,
+        "total_votes": 3540,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 2306,
+                "reconfirm_votes": 19,
+                "total": 2325
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 797,
+                "reconfirm_votes": 13,
+                "total": 810
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 312,
+                "reconfirm_votes": 5,
+                "total": 317
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 41,
+                "reconfirm_votes": 41,
+                "total": 82
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 88,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 87",
+        "vote_type": "관내투표",
+        "valid_votes": 6949,
+        "invalid_votes": 0,
+        "total_votes": 6949,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 4792,
+                "reconfirm_votes": 38,
+                "total": 4830
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1404,
+                "reconfirm_votes": 16,
+                "total": 1420
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 542,
+                "reconfirm_votes": 5,
+                "total": 547
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 74,
+                "reconfirm_votes": 74,
+                "total": 148
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 89,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 88",
+        "vote_type": "관내투표",
+        "valid_votes": 6077,
+        "invalid_votes": 0,
+        "total_votes": 6077,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 3568,
+                "reconfirm_votes": 42,
+                "total": 3610
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1374,
+                "reconfirm_votes": 22,
+                "total": 1396
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 978,
+                "reconfirm_votes": 13,
+                "total": 991
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 70,
+                "reconfirm_votes": 2,
+                "total": 72
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 4,
+                "total": 8
+            }
+        ]
+    },
+    {
+        "id": 90,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 89",
+        "vote_type": "관내투표",
+        "valid_votes": 12606,
+        "invalid_votes": 0,
+        "total_votes": 12606,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 4169,
+                "reconfirm_votes": 5920,
+                "total": 10089
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1278,
+                "reconfirm_votes": 196,
+                "total": 1474
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 845,
+                "reconfirm_votes": 14,
+                "total": 859
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 87,
+                "reconfirm_votes": 87,
+                "total": 174
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 5,
+                "reconfirm_votes": 5,
+                "total": 10
+            }
+        ]
+    },
+    {
+        "id": 91,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 90",
+        "vote_type": "관내투표",
+        "valid_votes": 6452,
+        "invalid_votes": 0,
+        "total_votes": 6452,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 4461,
+                "reconfirm_votes": 60,
+                "total": 4521
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1285,
+                "reconfirm_votes": 0,
+                "total": 1285
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 573,
+                "reconfirm_votes": 11,
+                "total": 584
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 52,
+                "reconfirm_votes": 2,
+                "total": 54
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 4,
+                "total": 8
+            }
+        ]
+    },
+    {
+        "id": 92,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 91",
+        "vote_type": "관내투표",
+        "valid_votes": 8419,
+        "invalid_votes": 0,
+        "total_votes": 8419,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 5568,
+                "reconfirm_votes": 53,
+                "total": 5621
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1581,
+                "reconfirm_votes": 14,
+                "total": 1595
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 995,
+                "reconfirm_votes": 12,
+                "total": 1007
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 95,
+                "reconfirm_votes": 95,
+                "total": 190
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 93,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 92",
+        "vote_type": "관내투표",
+        "valid_votes": 33865,
+        "invalid_votes": 0,
+        "total_votes": 33865,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 19198,
+                "reconfirm_votes": 337,
+                "total": 19535
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 8388,
+                "reconfirm_votes": 203,
+                "total": 8591
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 5190,
+                "reconfirm_votes": 143,
+                "total": 5333
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 371,
+                "reconfirm_votes": 4,
+                "total": 375
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 30,
+                "reconfirm_votes": 1,
+                "total": 31
+            }
+        ]
+    },
+    {
+        "id": 94,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 93",
+        "vote_type": "관내투표",
+        "valid_votes": 345,
+        "invalid_votes": 0,
+        "total_votes": 345,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 130,
+                "reconfirm_votes": 0,
+                "total": 130
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 140,
+                "reconfirm_votes": 0,
+                "total": 140
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 72,
+                "reconfirm_votes": 0,
+                "total": 72
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 2,
+                "reconfirm_votes": 0,
+                "total": 2
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 95,
+        "voting_place": "대전유성구개표상황표(39584)",
+        "district_name": "대전유성구개표상황표(39584) - 투표구 94",
+        "vote_type": "관내투표",
+        "valid_votes": 1696,
+        "invalid_votes": 0,
+        "total_votes": 1696,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 961,
+                "reconfirm_votes": 18,
+                "total": 979
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 319,
+                "reconfirm_votes": 7,
+                "total": 326
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 180,
+                "reconfirm_votes": 180,
+                "total": 360
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 28,
+                "reconfirm_votes": 1,
+                "total": 29
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    }
+];
+
+        const CANDIDATES = [
+            { name: '이재명', color: '#E74C3C' },
+            { name: '김문수', color: '#3498DB' },
+            { name: '이준석', color: '#2ECC71' },
+            { name: '권영국', color: '#F39C12' },
+            { name: '송진호', color: '#9B59B6' }
+        ];
+
+        function Dashboard() {
+            const [selectedCandidates, setSelectedCandidates] = useState(
+                CANDIDATES.map(c => c.name)
+            );
+
+            // Calculate candidate totals
+            const candidateTotals = useMemo(() => {
+                const totals = {};
+                CANDIDATES.forEach(c => {
+                    totals[c.name] = {
+                        sorted: 0,
+                        reconfirm: 0,
+                        total: 0
+                    };
+                });
+
+                VOTING_DATA.forEach(district => {
+                    district.candidates.forEach(cand => {
+                        if (totals[cand.name]) {
+                            totals[cand.name].sorted += cand.sorted_votes;
+                            totals[cand.name].reconfirm += cand.reconfirm_votes;
+                            totals[cand.name].total += cand.total;
+                        }
+                    });
+                });
+
+                return totals;
+            }, []);
+
+            const toggleCandidate = (name) => {
+                setSelectedCandidates(prev =>
+                    prev.includes(name)
+                        ? prev.filter(c => c !== name)
+                        : [...prev, name]
+                );
+            };
+
+            const selectAll = () => {
+                setSelectedCandidates(CANDIDATES.map(c => c.name));
+            };
+
+            const clearAll = () => {
+                setSelectedCandidates([]);
+            };
+
+            const exportCSV = () => {
+                if (selectedCandidates.length === 0) {
+                    alert('선택된 후보자가 없습니다.');
+                    return;
+                }
+
+                let csv = '투표구,유형,유효투표,무효투표,전체투표';
+                selectedCandidates.forEach(name => {
+                    csv += `,${name}_분류,${name}_재확인,${name}_계`;
+                });
+                csv += '\n';
+
+                VOTING_DATA.forEach(district => {
+                    csv += `"${district.district_name}","${district.vote_type}",${district.valid_votes},${district.invalid_votes},${district.total_votes}`;
+
+                    selectedCandidates.forEach(name => {
+                        const cand = district.candidates.find(c => c.name === name);
+                        if (cand) {
+                            csv += `,${cand.sorted_votes},${cand.reconfirm_votes},${cand.total}`;
+                        } else {
+                            csv += ',0,0,0';
+                        }
+                    });
+
+                    csv += '\n';
+                });
+
+                // Add totals row
+                const totalValid = VOTING_DATA.reduce((sum, d) => sum + d.valid_votes, 0);
+                const totalInvalid = VOTING_DATA.reduce((sum, d) => sum + d.invalid_votes, 0);
+                const totalAll = totalValid + totalInvalid;
+
+                csv += `"합계","전체",${totalValid},${totalInvalid},${totalAll}`;
+
+                selectedCandidates.forEach(name => {
+                    const totals = candidateTotals[name];
+                    csv += `,${totals.sorted},${totals.reconfirm},${totals.total}`;
+                });
+
+                const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `대전유성구개표상황표(39584)_개표상황_${selectedCandidates.length}명_${new Date().toISOString().split('T')[0]}.csv`;
+                link.click();
+            };
+
+            return (
+                <div className="dashboard">
+                    <div className="header">
+                        <h1>대전유성구개표상황표(39584) 개표상황표 분석 대시보드</h1>
+                        <div className="subtitle">제21대 대통령선거 투표 심사·집계 분석</div>
+                    </div>
+
+                    <CandidateFilter
+                        selectedCandidates={selectedCandidates}
+                        candidateTotals={candidateTotals}
+                        onToggle={toggleCandidate}
+                        onSelectAll={selectAll}
+                        onClearAll={clearAll}
+                    />
+
+                    <div className="charts-grid">
+                        <ValidInvalidChart data={VOTING_DATA} />
+                        <ReliabilityChart
+                            candidateTotals={candidateTotals}
+                            selectedCandidates={selectedCandidates}
+                        />
+                    </div>
+
+                    <DataTable
+                        data={VOTING_DATA}
+                        selectedCandidates={selectedCandidates}
+                        candidateTotals={candidateTotals}
+                        onExport={exportCSV}
+                    />
+                </div>
+            );
+        }
+
+        function CandidateFilter({
+            selectedCandidates,
+            candidateTotals,
+            onToggle,
+            onSelectAll,
+            onClearAll
+        }) {
+            return (
+                <div className="filter-section">
+                    <div className="filter-header">
+                        <div className="filter-title">후보자 필터</div>
+                        <div className="button-group">
+                            <button className="btn btn-primary" onClick={onSelectAll}>
+                                전체선택
+                            </button>
+                            <button className="btn btn-secondary" onClick={onClearAll}>
+                                전체해제
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="candidates-grid">
+                        {CANDIDATES.map(candidate => {
+                            const isSelected = selectedCandidates.includes(candidate.name);
+                            const totals = candidateTotals[candidate.name];
+
+                            return (
+                                <div
+                                    key={candidate.name}
+                                    className={`candidate-checkbox ${isSelected ? 'selected' : ''}`}
+                                    onClick={() => onToggle(candidate.name)}
+                                    style={{
+                                        borderColor: isSelected ? candidate.color : undefined
+                                    }}
+                                >
+                                    <input type="checkbox" checked={isSelected} readOnly />
+                                    <div
+                                        className="candidate-name"
+                                        style={{ color: candidate.color }}
+                                    >
+                                        {candidate.name}
+                                    </div>
+                                    <div className="candidate-stats">
+                                        <div>분류된표: {totals.sorted.toLocaleString()}</div>
+                                        <div>재검표수: {totals.reconfirm.toLocaleString()}</div>
+                                        <div>계: {totals.total.toLocaleString()}</div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="selection-info">
+                        {selectedCandidates.length}명의 후보자 선택됨
+                    </div>
+                </div>
+            );
+        }
+
+        function ValidInvalidChart({ data }) {
+            const canvasRef = React.useRef(null);
+            const chartRef = React.useRef(null);
+
+            useEffect(() => {
+                if (!canvasRef.current) return;
+
+                // Group by voting place
+                const placeData = {};
+                data.forEach(district => {
+                    if (!placeData[district.voting_place]) {
+                        placeData[district.voting_place] = {
+                            valid: 0,
+                            invalid: 0
+                        };
+                    }
+                    placeData[district.voting_place].valid += district.valid_votes;
+                    placeData[district.voting_place].invalid += district.invalid_votes;
+                });
+
+                const labels = Object.keys(placeData);
+                const validData = labels.map(label => placeData[label].valid);
+                const invalidData = labels.map(label => placeData[label].invalid);
+
+                if (chartRef.current) {
+                    chartRef.current.destroy();
+                }
+
+                const ctx = canvasRef.current.getContext('2d');
+                chartRef.current = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: '유효투표',
+                                data: validData,
+                                backgroundColor: 'rgba(79, 158, 255, 0.8)',
+                                borderColor: 'rgba(79, 158, 255, 1)',
+                                borderWidth: 2
+                            },
+                            {
+                                label: '무효투표',
+                                data: invalidData,
+                                backgroundColor: 'rgba(255, 107, 107, 0.8)',
+                                borderColor: 'rgba(255, 107, 107, 1)',
+                                borderWidth: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#e8eaf0',
+                                    font: {
+                                        family: "'Noto Sans KR', sans-serif",
+                                        size: 12
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(26, 31, 58, 0.95)',
+                                titleColor: '#e8eaf0',
+                                bodyColor: '#a0a8c0',
+                                borderColor: '#2a3150',
+                                borderWidth: 1,
+                                padding: 12,
+                                titleFont: {
+                                    family: "'Noto Sans KR', sans-serif"
+                                },
+                                bodyFont: {
+                                    family: "'JetBrains Mono', monospace"
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    color: 'rgba(42, 49, 80, 0.5)'
+                                },
+                                ticks: {
+                                    color: '#a0a8c0',
+                                    font: {
+                                        family: "'Noto Sans KR', sans-serif"
+                                    }
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    color: 'rgba(42, 49, 80, 0.5)'
+                                },
+                                ticks: {
+                                    color: '#a0a8c0',
+                                    font: {
+                                        family: "'JetBrains Mono', monospace"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                return () => {
+                    if (chartRef.current) {
+                        chartRef.current.destroy();
+                    }
+                };
+            }, [data]);
+
+            return (
+                <div className="chart-card">
+                    <div className="chart-title">투표구별 유효/무효 투표 현황</div>
+                    <div className="chart-container">
+                        <canvas ref={canvasRef}></canvas>
+                    </div>
+                </div>
+            );
+        }
+
+        function ReliabilityChart({ candidateTotals, selectedCandidates }) {
+            return (
+                <div className="chart-card">
+                    <div className="chart-title">후보자별 득표 신뢰도 분석</div>
+                    <div className="chart-container">
+                        <div className="reliability-bars">
+                            {CANDIDATES.filter(c => selectedCandidates.includes(c.name)).map(candidate => {
+                                const totals = candidateTotals[candidate.name];
+                                const sortedRate = totals.total > 0 ? (totals.sorted / totals.total * 100).toFixed(1) : "0.0";
+                                const reconfirmRate = totals.total > 0 ? (totals.reconfirm / totals.total * 100).toFixed(1) : "0.0";
+
+                                return (
+                                    <div key={candidate.name} className="reliability-item">
+                                        <div className="reliability-header">
+                                            <div className="reliability-name" style={{ color: candidate.color }}>
+                                                {candidate.name}
+                                            </div>
+                                            <div className="reliability-stats">
+                                                분류: {sortedRate}% | 재확인: {reconfirmRate}%
+                                            </div>
+                                        </div>
+                                        <div className="reliability-bar-container">
+                                            <div
+                                                className="reliability-bar"
+                                                style={{
+                                                    width: `${sortedRate}%`,
+                                                    background: `linear-gradient(90deg, ${candidate.color}, ${candidate.color}dd)`
+                                                }}
+                                            >
+                                                {sortedRate}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        {selectedCandidates.length === 0 && (
+                            <div className="empty-state">
+                                <div className="empty-icon">📊</div>
+                                <div className="empty-message">선택된 후보자가 없습니다</div>
+                                <div className="empty-hint">위에서 후보자를 선택해주세요</div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function DataTable({ data, selectedCandidates, candidateTotals, onExport }) {
+            const totals = useMemo(() => {
+                return {
+                    valid: data.reduce((sum, d) => sum + d.valid_votes, 0),
+                    invalid: data.reduce((sum, d) => sum + d.invalid_votes, 0),
+                    total: data.reduce((sum, d) => sum + d.total_votes, 0)
+                };
+            }, [data]);
+
+            return (
+                <div className="table-container">
+                    <div className="table-header">
+                        <div className="chart-title">상세 심사·집계표</div>
+                        <button
+                            className="btn btn-export"
+                            onClick={onExport}
+                            disabled={selectedCandidates.length === 0}
+                        >
+                            📥 CSV 내보내기
+                        </button>
+                    </div>
+
+                    {selectedCandidates.length === 0 ? (
+                        <div className="empty-state">
+                            <div className="empty-icon">📋</div>
+                            <div className="empty-message">선택된 후보자가 없습니다</div>
+                            <div className="empty-hint">후보자를 선택하면 상세 데이터를 확인할 수 있습니다</div>
+                        </div>
+                    ) : (
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th rowSpan="2">투표구</th>
+                                    <th rowSpan="2">유형</th>
+                                    <th rowSpan="2">유효투표</th>
+                                    <th rowSpan="2">무효투표</th>
+                                    <th rowSpan="2">전체투표</th>
+                                    {selectedCandidates.map(name => (
+                                        <th
+                                            key={name}
+                                            colSpan="3"
+                                            className="candidate-header"
+                                            style={{ color: CANDIDATES.find(c => c.name === name)?.color }}
+                                        >
+                                            {name}
+                                        </th>
+                                    ))}
+                                </tr>
+                                <tr>
+                                    {selectedCandidates.map(name => (
+                                        <React.Fragment key={name}>
+                                            <th className="subheader">분류</th>
+                                            <th className="subheader">재확인</th>
+                                            <th className="subheader">계</th>
+                                        </React.Fragment>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data.map((district, idx) => (
+                                    <tr key={idx}>
+                                        <td>{district.district_name}</td>
+                                        <td>{district.vote_type}</td>
+                                        <td className="number">{district.valid_votes.toLocaleString()}</td>
+                                        <td className="number">{district.invalid_votes.toLocaleString()}</td>
+                                        <td className="number">{district.total_votes.toLocaleString()}</td>
+                                        {selectedCandidates.map(name => {
+                                            const cand = district.candidates.find(c => c.name === name);
+                                            return (
+                                                <React.Fragment key={name}>
+                                                    <td className="candidate-cell number">
+                                                        {cand ? cand.sorted_votes.toLocaleString() : '0'}
+                                                    </td>
+                                                    <td className="candidate-cell number">
+                                                        {cand ? cand.reconfirm_votes.toLocaleString() : '0'}
+                                                    </td>
+                                                    <td className="candidate-cell number">
+                                                        {cand ? cand.total.toLocaleString() : '0'}
+                                                    </td>
+                                                </React.Fragment>
+                                            );
+                                        })}
+                                    </tr>
+                                ))}
+                                <tr className="totals-row">
+                                    <td colSpan="2">합계</td>
+                                    <td className="number">{totals.valid.toLocaleString()}</td>
+                                    <td className="number">{totals.invalid.toLocaleString()}</td>
+                                    <td className="number">{totals.total.toLocaleString()}</td>
+                                    {selectedCandidates.map(name => {
+                                        const t = candidateTotals[name];
+                                        return (
+                                            <React.Fragment key={name}>
+                                                <td className="candidate-cell number">{t.sorted.toLocaleString()}</td>
+                                                <td className="candidate-cell number">{t.reconfirm.toLocaleString()}</td>
+                                                <td className="candidate-cell number">{t.total.toLocaleString()}</td>
+                                            </React.Fragment>
+                                        );
+                                    })}
+                                </tr>
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<Dashboard />);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,5270 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>충남천안시동남구개표상황표(39189) 개표상황표 분석 대시보드</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #141932;
+            --bg-card: #1a1f3a;
+            --text-primary: #e8eaf0;
+            --text-secondary: #a0a8c0;
+            --accent-blue: #4f9eff;
+            --accent-cyan: #00d4ff;
+            --border-color: #2a3150;
+            --success: #00e676;
+            --warning: #ffab00;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem;
+            background-attachment: fixed;
+        }
+
+        .dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--border-color);
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 300;
+        }
+
+        .filter-section {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .filter-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(79, 158, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .btn-export {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 230, 118, 0.4);
+        }
+
+        .candidates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .candidate-checkbox {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .candidate-checkbox:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(79, 158, 255, 0.2);
+        }
+
+        .candidate-checkbox.selected {
+            border-width: 2px;
+            background: linear-gradient(135deg, rgba(79, 158, 255, 0.1), rgba(0, 212, 255, 0.1));
+        }
+
+        .candidate-checkbox.selected::before {
+            content: '✓';
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 28px;
+            height: 28px;
+            background: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .candidate-checkbox input {
+            display: none;
+        }
+
+        .candidate-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .candidate-stats {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .candidate-stats div {
+            margin-top: 0.3rem;
+        }
+
+        .selection-info {
+            text-align: center;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(79, 158, 255, 0.1);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent-cyan);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--accent-cyan);
+        }
+
+        .chart-container {
+            height: 400px;
+            position: relative;
+        }
+
+        .reliability-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .reliability-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .reliability-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .reliability-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .reliability-stats {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .reliability-bar-container {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            height: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .reliability-bar {
+            height: 100%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            padding: 0 0.8rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: white;
+            position: relative;
+        }
+
+        .reliability-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        .table-container {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow-x: auto;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.9rem;
+        }
+
+        thead {
+            background: var(--bg-secondary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 1rem 0.8rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--accent-cyan);
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        th.candidate-header {
+            background: var(--bg-secondary);
+            text-align: center;
+            border-left: 1px solid var(--border-color);
+        }
+
+        th.subheader {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            padding: 0.6rem 0.5rem;
+        }
+
+        tbody tr {
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: rgba(79, 158, 255, 0.05);
+        }
+
+        tbody tr.totals-row {
+            background: linear-gradient(135deg, rgba(79, 158, 255, 0.15), rgba(0, 212, 255, 0.15));
+            font-weight: 700;
+        }
+
+        td {
+            padding: 0.9rem 0.8rem;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        td.number {
+            font-family: 'JetBrains Mono', monospace;
+            text-align: right;
+        }
+
+        td.candidate-cell {
+            border-left: 1px solid var(--border-color);
+            text-align: right;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-message {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-hint {
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .candidates-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .button-group {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // Sample data embedded
+        const VOTING_DATA = [
+    {
+        "id": 2,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 1",
+        "vote_type": "관내투표",
+        "valid_votes": 953,
+        "invalid_votes": 0,
+        "total_votes": 953,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 532,
+                "reconfirm_votes": 10,
+                "total": 542
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 286,
+                "reconfirm_votes": 0,
+                "total": 286
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 52,
+                "reconfirm_votes": 53,
+                "total": 105
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 6,
+                "reconfirm_votes": 6,
+                "total": 12
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 6,
+                "total": 8
+            }
+        ]
+    },
+    {
+        "id": 3,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 2",
+        "vote_type": "관내투표",
+        "valid_votes": 1145,
+        "invalid_votes": 0,
+        "total_votes": 1145,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 282,
+                "reconfirm_votes": 296,
+                "total": 578
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 245,
+                "reconfirm_votes": 259,
+                "total": 504
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 32,
+                "reconfirm_votes": 0,
+                "total": 32
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 4,
+                "reconfirm_votes": 25,
+                "total": 29
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 0,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 4,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 3",
+        "vote_type": "관내투표",
+        "valid_votes": 739,
+        "invalid_votes": 0,
+        "total_votes": 739,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 445,
+                "reconfirm_votes": 0,
+                "total": 445
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 269,
+                "reconfirm_votes": 0,
+                "total": 269
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 21,
+                "reconfirm_votes": 0,
+                "total": 21
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 4,
+                "reconfirm_votes": 0,
+                "total": 4
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 5,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 4",
+        "vote_type": "관내투표",
+        "valid_votes": 655,
+        "invalid_votes": 0,
+        "total_votes": 655,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 373,
+                "reconfirm_votes": 0,
+                "total": 373
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 241,
+                "reconfirm_votes": 0,
+                "total": 241
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 30,
+                "reconfirm_votes": 0,
+                "total": 30
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 7,
+                "reconfirm_votes": 0,
+                "total": 7
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 0,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 6,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 5",
+        "vote_type": "관내투표",
+        "valid_votes": 1248,
+        "invalid_votes": 0,
+        "total_votes": 1248,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 674,
+                "reconfirm_votes": 12,
+                "total": 686
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 412,
+                "reconfirm_votes": 9,
+                "total": 421
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 64,
+                "reconfirm_votes": 64,
+                "total": 128
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 13,
+                "reconfirm_votes": 0,
+                "total": 13
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 7,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 6",
+        "vote_type": "관내투표",
+        "valid_votes": 2407,
+        "invalid_votes": 0,
+        "total_votes": 2407,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1468,
+                "reconfirm_votes": 0,
+                "total": 1468
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 716,
+                "reconfirm_votes": 0,
+                "total": 716
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 206,
+                "reconfirm_votes": 0,
+                "total": 206
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 16,
+                "reconfirm_votes": 0,
+                "total": 16
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 8,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 7",
+        "vote_type": "관내투표",
+        "valid_votes": 1775,
+        "invalid_votes": 0,
+        "total_votes": 1775,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 882,
+                "reconfirm_votes": 51,
+                "total": 933
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 501,
+                "reconfirm_votes": 45,
+                "total": 546
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 126,
+                "reconfirm_votes": 133,
+                "total": 259
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 13,
+                "reconfirm_votes": 14,
+                "total": 27
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 8,
+                "total": 10
+            }
+        ]
+    },
+    {
+        "id": 9,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 8",
+        "vote_type": "관내투표",
+        "valid_votes": 2462,
+        "invalid_votes": 0,
+        "total_votes": 2462,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 598,
+                "reconfirm_votes": 9,
+                "total": 607
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 735,
+                "reconfirm_votes": 746,
+                "total": 1481
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 170,
+                "reconfirm_votes": 170,
+                "total": 340
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 15,
+                "reconfirm_votes": 15,
+                "total": 30
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 10,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 9",
+        "vote_type": "관내투표",
+        "valid_votes": 332,
+        "invalid_votes": 0,
+        "total_votes": 332,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 159,
+                "reconfirm_votes": 0,
+                "total": 159
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 105,
+                "reconfirm_votes": 0,
+                "total": 105
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 68,
+                "reconfirm_votes": 0,
+                "total": 68
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 11,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 10",
+        "vote_type": "관내투표",
+        "valid_votes": 24891,
+        "invalid_votes": 0,
+        "total_votes": 24891,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 900,
+                "reconfirm_votes": 33,
+                "total": 933
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 633,
+                "reconfirm_votes": 23214,
+                "total": 23847
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 89,
+                "reconfirm_votes": 3,
+                "total": 92
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 9,
+                "reconfirm_votes": 9,
+                "total": 18
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 12,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 11",
+        "vote_type": "관내투표",
+        "valid_votes": 659,
+        "invalid_votes": 0,
+        "total_votes": 659,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 165,
+                "reconfirm_votes": 0,
+                "total": 165
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 454,
+                "reconfirm_votes": 0,
+                "total": 454
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 34,
+                "reconfirm_votes": 0,
+                "total": 34
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 5,
+                "reconfirm_votes": 0,
+                "total": 5
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 13,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 12",
+        "vote_type": "관내투표",
+        "valid_votes": 1761,
+        "invalid_votes": 0,
+        "total_votes": 1761,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 734,
+                "reconfirm_votes": 0,
+                "total": 734
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 875,
+                "reconfirm_votes": 0,
+                "total": 875
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 95,
+                "reconfirm_votes": 0,
+                "total": 95
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 27,
+                "reconfirm_votes": 27,
+                "total": 54
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 0,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 14,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 13",
+        "vote_type": "관내투표",
+        "valid_votes": 488,
+        "invalid_votes": 0,
+        "total_votes": 488,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 126,
+                "reconfirm_votes": 3,
+                "total": 129
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 294,
+                "reconfirm_votes": 7,
+                "total": 301
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 26,
+                "reconfirm_votes": 26,
+                "total": 52
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 15,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 14",
+        "vote_type": "관내투표",
+        "valid_votes": 3028,
+        "invalid_votes": 0,
+        "total_votes": 3028,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1583,
+                "reconfirm_votes": 0,
+                "total": 1583
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 587,
+                "reconfirm_votes": 594,
+                "total": 1181
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 200,
+                "reconfirm_votes": 3,
+                "total": 203
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 30,
+                "reconfirm_votes": 30,
+                "total": 60
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 16,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 15",
+        "vote_type": "관내투표",
+        "valid_votes": 1937,
+        "invalid_votes": 0,
+        "total_votes": 1937,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1172,
+                "reconfirm_votes": 0,
+                "total": 1172
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 581,
+                "reconfirm_votes": 0,
+                "total": 581
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 159,
+                "reconfirm_votes": 0,
+                "total": 159
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 22,
+                "reconfirm_votes": 0,
+                "total": 22
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 0,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 17,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 16",
+        "vote_type": "관내투표",
+        "valid_votes": 3303,
+        "invalid_votes": 0,
+        "total_votes": 3303,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 2144,
+                "reconfirm_votes": 35,
+                "total": 2179
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 900,
+                "reconfirm_votes": 17,
+                "total": 917
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 170,
+                "reconfirm_votes": 3,
+                "total": 173
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 32,
+                "reconfirm_votes": 1,
+                "total": 33
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 18,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 17",
+        "vote_type": "관내투표",
+        "valid_votes": 817,
+        "invalid_votes": 0,
+        "total_votes": 817,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 134,
+                "reconfirm_votes": 2,
+                "total": 136
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 631,
+                "reconfirm_votes": 23,
+                "total": 654
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 23,
+                "reconfirm_votes": 2,
+                "total": 25
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 19,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 18",
+        "vote_type": "관내투표",
+        "valid_votes": 1511,
+        "invalid_votes": 0,
+        "total_votes": 1511,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 574,
+                "reconfirm_votes": 0,
+                "total": 574
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 737,
+                "reconfirm_votes": 18,
+                "total": 755
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 142,
+                "reconfirm_votes": 4,
+                "total": 146
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 14,
+                "reconfirm_votes": 14,
+                "total": 28
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 4,
+                "total": 8
+            }
+        ]
+    },
+    {
+        "id": 20,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 19",
+        "vote_type": "관내투표",
+        "valid_votes": 613,
+        "invalid_votes": 0,
+        "total_votes": 613,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 164,
+                "reconfirm_votes": 5,
+                "total": 169
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 419,
+                "reconfirm_votes": 0,
+                "total": 419
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 19,
+                "reconfirm_votes": 0,
+                "total": 19
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 6,
+                "reconfirm_votes": 0,
+                "total": 6
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 21,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 20",
+        "vote_type": "관내투표",
+        "valid_votes": 4629,
+        "invalid_votes": 0,
+        "total_votes": 4629,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1421,
+                "reconfirm_votes": 1437,
+                "total": 2858
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 772,
+                "reconfirm_votes": 796,
+                "total": 1568
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 155,
+                "reconfirm_votes": 2,
+                "total": 157
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 21,
+                "reconfirm_votes": 21,
+                "total": 42
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 22,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 21",
+        "vote_type": "관내투표",
+        "valid_votes": 2086,
+        "invalid_votes": 0,
+        "total_votes": 2086,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1160,
+                "reconfirm_votes": 0,
+                "total": 1160
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 721,
+                "reconfirm_votes": 0,
+                "total": 721
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 185,
+                "reconfirm_votes": 0,
+                "total": 185
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 16,
+                "reconfirm_votes": 0,
+                "total": 16
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 0,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 23,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 22",
+        "vote_type": "관내투표",
+        "valid_votes": 2813,
+        "invalid_votes": 0,
+        "total_votes": 2813,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1406,
+                "reconfirm_votes": 0,
+                "total": 1406
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1100,
+                "reconfirm_votes": 0,
+                "total": 1100
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 268,
+                "reconfirm_votes": 0,
+                "total": 268
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 36,
+                "reconfirm_votes": 0,
+                "total": 36
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 0,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 24,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 23",
+        "vote_type": "관내투표",
+        "valid_votes": 1824,
+        "invalid_votes": 0,
+        "total_votes": 1824,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 685,
+                "reconfirm_votes": 0,
+                "total": 685
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 974,
+                "reconfirm_votes": 0,
+                "total": 974
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 144,
+                "reconfirm_votes": 0,
+                "total": 144
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 19,
+                "reconfirm_votes": 0,
+                "total": 19
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 0,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 25,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 24",
+        "vote_type": "관내투표",
+        "valid_votes": 1099,
+        "invalid_votes": 0,
+        "total_votes": 1099,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 554,
+                "reconfirm_votes": 0,
+                "total": 554
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 438,
+                "reconfirm_votes": 0,
+                "total": 438
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 94,
+                "reconfirm_votes": 0,
+                "total": 94
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 11,
+                "reconfirm_votes": 0,
+                "total": 11
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 0,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 26,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 25",
+        "vote_type": "관내투표",
+        "valid_votes": 2416,
+        "invalid_votes": 0,
+        "total_votes": 2416,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1473,
+                "reconfirm_votes": 23,
+                "total": 1496
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 750,
+                "reconfirm_votes": 21,
+                "total": 771
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 121,
+                "reconfirm_votes": 2,
+                "total": 123
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 18,
+                "reconfirm_votes": 0,
+                "total": 18
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 4,
+                "total": 8
+            }
+        ]
+    },
+    {
+        "id": 27,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 26",
+        "vote_type": "관내투표",
+        "valid_votes": 1592,
+        "invalid_votes": 0,
+        "total_votes": 1592,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 581,
+                "reconfirm_votes": 0,
+                "total": 581
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 884,
+                "reconfirm_votes": 0,
+                "total": 884
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 122,
+                "reconfirm_votes": 0,
+                "total": 122
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 5,
+                "reconfirm_votes": 0,
+                "total": 5
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 28,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 27",
+        "vote_type": "관내투표",
+        "valid_votes": 806,
+        "invalid_votes": 0,
+        "total_votes": 806,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 534,
+                "reconfirm_votes": 30,
+                "total": 564
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 131,
+                "reconfirm_votes": 13,
+                "total": 144
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 78,
+                "reconfirm_votes": 2,
+                "total": 80
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 13,
+                "reconfirm_votes": 1,
+                "total": 14
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 29,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 28",
+        "vote_type": "관내투표",
+        "valid_votes": 2725,
+        "invalid_votes": 0,
+        "total_votes": 2725,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 663,
+                "reconfirm_votes": 707,
+                "total": 1370
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1010,
+                "reconfirm_votes": 66,
+                "total": 1076
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 111,
+                "reconfirm_votes": 122,
+                "total": 233
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 19,
+                "reconfirm_votes": 22,
+                "total": 41
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 3,
+                "total": 5
+            }
+        ]
+    },
+    {
+        "id": 30,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 29",
+        "vote_type": "관내투표",
+        "valid_votes": 1569,
+        "invalid_votes": 0,
+        "total_votes": 1569,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 534,
+                "reconfirm_votes": 3,
+                "total": 537
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 862,
+                "reconfirm_votes": 14,
+                "total": 876
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 133,
+                "reconfirm_votes": 2,
+                "total": 135
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 10,
+                "reconfirm_votes": 10,
+                "total": 20
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 31,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 30",
+        "vote_type": "관내투표",
+        "valid_votes": 1012,
+        "invalid_votes": 0,
+        "total_votes": 1012,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 354,
+                "reconfirm_votes": 0,
+                "total": 354
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 593,
+                "reconfirm_votes": 0,
+                "total": 593
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 58,
+                "reconfirm_votes": 0,
+                "total": 58
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 6,
+                "reconfirm_votes": 0,
+                "total": 6
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 32,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 31",
+        "vote_type": "관내투표",
+        "valid_votes": 2057,
+        "invalid_votes": 0,
+        "total_votes": 2057,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 809,
+                "reconfirm_votes": 12,
+                "total": 821
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 967,
+                "reconfirm_votes": 0,
+                "total": 967
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 211,
+                "reconfirm_votes": 2,
+                "total": 213
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 25,
+                "reconfirm_votes": 25,
+                "total": 50
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 33,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 32",
+        "vote_type": "관내투표",
+        "valid_votes": 6118,
+        "invalid_votes": 0,
+        "total_votes": 6118,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 3582,
+                "reconfirm_votes": 136,
+                "total": 3718
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1541,
+                "reconfirm_votes": 79,
+                "total": 1620
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 655,
+                "reconfirm_votes": 32,
+                "total": 687
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 63,
+                "reconfirm_votes": 30,
+                "total": 93
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 34,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 33",
+        "vote_type": "관내투표",
+        "valid_votes": 2333,
+        "invalid_votes": 0,
+        "total_votes": 2333,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1033,
+                "reconfirm_votes": 0,
+                "total": 1033
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1029,
+                "reconfirm_votes": 0,
+                "total": 1029
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 237,
+                "reconfirm_votes": 0,
+                "total": 237
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 29,
+                "reconfirm_votes": 0,
+                "total": 29
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 5,
+                "reconfirm_votes": 0,
+                "total": 5
+            }
+        ]
+    },
+    {
+        "id": 35,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 34",
+        "vote_type": "관내투표",
+        "valid_votes": 7242,
+        "invalid_votes": 0,
+        "total_votes": 7242,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 5116,
+                "reconfirm_votes": 65,
+                "total": 5181
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1408,
+                "reconfirm_votes": 0,
+                "total": 1408
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 548,
+                "reconfirm_votes": 10,
+                "total": 558
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 46,
+                "reconfirm_votes": 46,
+                "total": 92
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 0,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 36,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 35",
+        "vote_type": "관내투표",
+        "valid_votes": 1851,
+        "invalid_votes": 0,
+        "total_votes": 1851,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 730,
+                "reconfirm_votes": 0,
+                "total": 730
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 958,
+                "reconfirm_votes": 0,
+                "total": 958
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 144,
+                "reconfirm_votes": 0,
+                "total": 144
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 17,
+                "reconfirm_votes": 0,
+                "total": 17
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 0,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 37,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 36",
+        "vote_type": "관내투표",
+        "valid_votes": 3322,
+        "invalid_votes": 0,
+        "total_votes": 3322,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1584,
+                "reconfirm_votes": 20,
+                "total": 1604
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1288,
+                "reconfirm_votes": 24,
+                "total": 1312
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 327,
+                "reconfirm_votes": 3,
+                "total": 330
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 34,
+                "reconfirm_votes": 34,
+                "total": 68
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 4,
+                "total": 8
+            }
+        ]
+    },
+    {
+        "id": 38,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 37",
+        "vote_type": "관내투표",
+        "valid_votes": 1109,
+        "invalid_votes": 0,
+        "total_votes": 1109,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 336,
+                "reconfirm_votes": 0,
+                "total": 336
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 674,
+                "reconfirm_votes": 0,
+                "total": 674
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 86,
+                "reconfirm_votes": 0,
+                "total": 86
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 0,
+                "total": 12
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 39,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 38",
+        "vote_type": "관내투표",
+        "valid_votes": 1948,
+        "invalid_votes": 0,
+        "total_votes": 1948,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 720,
+                "reconfirm_votes": 4,
+                "total": 724
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 948,
+                "reconfirm_votes": 16,
+                "total": 964
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 213,
+                "reconfirm_votes": 2,
+                "total": 215
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 21,
+                "reconfirm_votes": 21,
+                "total": 42
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 1,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 40,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 39",
+        "vote_type": "관내투표",
+        "valid_votes": 982,
+        "invalid_votes": 0,
+        "total_votes": 982,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 332,
+                "reconfirm_votes": 4,
+                "total": 336
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 561,
+                "reconfirm_votes": 0,
+                "total": 561
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 68,
+                "reconfirm_votes": 2,
+                "total": 70
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 15,
+                "reconfirm_votes": 0,
+                "total": 15
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 41,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 40",
+        "vote_type": "관내투표",
+        "valid_votes": 2099,
+        "invalid_votes": 0,
+        "total_votes": 2099,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 740,
+                "reconfirm_votes": 0,
+                "total": 740
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1066,
+                "reconfirm_votes": 20,
+                "total": 1086
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 239,
+                "reconfirm_votes": 0,
+                "total": 239
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 31,
+                "reconfirm_votes": 0,
+                "total": 31
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 0,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 42,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 41",
+        "vote_type": "관내투표",
+        "valid_votes": 1245,
+        "invalid_votes": 0,
+        "total_votes": 1245,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 434,
+                "reconfirm_votes": 2,
+                "total": 436
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 546,
+                "reconfirm_votes": 8,
+                "total": 554
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 115,
+                "reconfirm_votes": 115,
+                "total": 230
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 10,
+                "reconfirm_votes": 11,
+                "total": 21
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 43,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 42",
+        "vote_type": "관내투표",
+        "valid_votes": 977,
+        "invalid_votes": 0,
+        "total_votes": 977,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 299,
+                "reconfirm_votes": 0,
+                "total": 299
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 554,
+                "reconfirm_votes": 9,
+                "total": 563
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 48,
+                "reconfirm_votes": 47,
+                "total": 95
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 14,
+                "reconfirm_votes": 0,
+                "total": 14
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 5,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 44,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 43",
+        "vote_type": "관내투표",
+        "valid_votes": 1162,
+        "invalid_votes": 0,
+        "total_votes": 1162,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 366,
+                "reconfirm_votes": 0,
+                "total": 366
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 641,
+                "reconfirm_votes": 0,
+                "total": 641
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 133,
+                "reconfirm_votes": 0,
+                "total": 133
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 21,
+                "reconfirm_votes": 0,
+                "total": 21
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 45,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 44",
+        "vote_type": "관내투표",
+        "valid_votes": 3193,
+        "invalid_votes": 0,
+        "total_votes": 3193,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1379,
+                "reconfirm_votes": 130,
+                "total": 1509
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1357,
+                "reconfirm_votes": 15,
+                "total": 1372
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 249,
+                "reconfirm_votes": 0,
+                "total": 249
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 29,
+                "reconfirm_votes": 30,
+                "total": 59
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 46,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 45",
+        "vote_type": "관내투표",
+        "valid_votes": 442,
+        "invalid_votes": 0,
+        "total_votes": 442,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 112,
+                "reconfirm_votes": 2,
+                "total": 114
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 271,
+                "reconfirm_votes": 0,
+                "total": 271
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 27,
+                "reconfirm_votes": 28,
+                "total": 55
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 2,
+                "reconfirm_votes": 0,
+                "total": 2
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 47,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 46",
+        "vote_type": "관내투표",
+        "valid_votes": 1414,
+        "invalid_votes": 0,
+        "total_votes": 1414,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 424,
+                "reconfirm_votes": 10,
+                "total": 434
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 827,
+                "reconfirm_votes": 31,
+                "total": 858
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 95,
+                "reconfirm_votes": 2,
+                "total": 97
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 12,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 48,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 47",
+        "vote_type": "관내투표",
+        "valid_votes": 721,
+        "invalid_votes": 0,
+        "total_votes": 721,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 344,
+                "reconfirm_votes": 0,
+                "total": 344
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 322,
+                "reconfirm_votes": 0,
+                "total": 322
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 51,
+                "reconfirm_votes": 0,
+                "total": 51
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 3,
+                "reconfirm_votes": 0,
+                "total": 3
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 49,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 48",
+        "vote_type": "관내투표",
+        "valid_votes": 1327,
+        "invalid_votes": 0,
+        "total_votes": 1327,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 575,
+                "reconfirm_votes": 10,
+                "total": 585
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 494,
+                "reconfirm_votes": 12,
+                "total": 506
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 109,
+                "reconfirm_votes": 109,
+                "total": 218
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 13,
+                "reconfirm_votes": 2,
+                "total": 15
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 0,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 50,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 49",
+        "vote_type": "관내투표",
+        "valid_votes": 1148,
+        "invalid_votes": 0,
+        "total_votes": 1148,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 365,
+                "reconfirm_votes": 0,
+                "total": 365
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 683,
+                "reconfirm_votes": 0,
+                "total": 683
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 87,
+                "reconfirm_votes": 0,
+                "total": 87
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 10,
+                "reconfirm_votes": 0,
+                "total": 10
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 0,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 51,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 50",
+        "vote_type": "관내투표",
+        "valid_votes": 1427,
+        "invalid_votes": 0,
+        "total_votes": 1427,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 451,
+                "reconfirm_votes": 0,
+                "total": 451
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 895,
+                "reconfirm_votes": 0,
+                "total": 895
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 71,
+                "reconfirm_votes": 0,
+                "total": 71
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 6,
+                "reconfirm_votes": 2,
+                "total": 8
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 0,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 52,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 51",
+        "vote_type": "관내투표",
+        "valid_votes": 2502,
+        "invalid_votes": 0,
+        "total_votes": 2502,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1229,
+                "reconfirm_votes": 0,
+                "total": 1229
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1028,
+                "reconfirm_votes": 0,
+                "total": 1028
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 216,
+                "reconfirm_votes": 0,
+                "total": 216
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 28,
+                "reconfirm_votes": 0,
+                "total": 28
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 53,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 52",
+        "vote_type": "관내투표",
+        "valid_votes": 400,
+        "invalid_votes": 0,
+        "total_votes": 400,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 126,
+                "reconfirm_votes": 0,
+                "total": 126
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 255,
+                "reconfirm_votes": 0,
+                "total": 255
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 12,
+                "reconfirm_votes": 0,
+                "total": 12
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 6,
+                "reconfirm_votes": 0,
+                "total": 6
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 54,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 53",
+        "vote_type": "관내투표",
+        "valid_votes": 475,
+        "invalid_votes": 0,
+        "total_votes": 475,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 136,
+                "reconfirm_votes": 2,
+                "total": 138
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 295,
+                "reconfirm_votes": 10,
+                "total": 305
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 14,
+                "reconfirm_votes": 0,
+                "total": 14
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 7,
+                "reconfirm_votes": 7,
+                "total": 14
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 3,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 55,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 54",
+        "vote_type": "관내투표",
+        "valid_votes": 2361,
+        "invalid_votes": 0,
+        "total_votes": 2361,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1006,
+                "reconfirm_votes": 0,
+                "total": 1006
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1119,
+                "reconfirm_votes": 45,
+                "total": 1164
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 169,
+                "reconfirm_votes": 0,
+                "total": 169
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 22,
+                "reconfirm_votes": 0,
+                "total": 22
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 56,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 55",
+        "vote_type": "관내투표",
+        "valid_votes": 1715,
+        "invalid_votes": 0,
+        "total_votes": 1715,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 419,
+                "reconfirm_votes": 15,
+                "total": 434
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1010,
+                "reconfirm_votes": 21,
+                "total": 1031
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 113,
+                "reconfirm_votes": 113,
+                "total": 226
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 12,
+                "reconfirm_votes": 12,
+                "total": 24
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 57,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 56",
+        "vote_type": "관내투표",
+        "valid_votes": 1099,
+        "invalid_votes": 0,
+        "total_votes": 1099,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 169,
+                "reconfirm_votes": 8,
+                "total": 177
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 417,
+                "reconfirm_votes": 425,
+                "total": 842
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 38,
+                "reconfirm_votes": 38,
+                "total": 76
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 58,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 57",
+        "vote_type": "관내투표",
+        "valid_votes": 2050,
+        "invalid_votes": 0,
+        "total_votes": 2050,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 741,
+                "reconfirm_votes": 0,
+                "total": 741
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1089,
+                "reconfirm_votes": 30,
+                "total": 1119
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 145,
+                "reconfirm_votes": 0,
+                "total": 145
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 21,
+                "reconfirm_votes": 21,
+                "total": 42
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 0,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 59,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 58",
+        "vote_type": "관내투표",
+        "valid_votes": 2622,
+        "invalid_votes": 0,
+        "total_votes": 2622,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1290,
+                "reconfirm_votes": 15,
+                "total": 1305
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1064,
+                "reconfirm_votes": 0,
+                "total": 1064
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 195,
+                "reconfirm_votes": 4,
+                "total": 199
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 26,
+                "reconfirm_votes": 26,
+                "total": 52
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 1,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 60,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 59",
+        "vote_type": "관내투표",
+        "valid_votes": 1943,
+        "invalid_votes": 0,
+        "total_votes": 1943,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 843,
+                "reconfirm_votes": 0,
+                "total": 843
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 926,
+                "reconfirm_votes": 0,
+                "total": 926
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 145,
+                "reconfirm_votes": 0,
+                "total": 145
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 28,
+                "reconfirm_votes": 0,
+                "total": 28
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 61,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 60",
+        "vote_type": "관내투표",
+        "valid_votes": 1770,
+        "invalid_votes": 0,
+        "total_votes": 1770,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 899,
+                "reconfirm_votes": 19,
+                "total": 918
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 698,
+                "reconfirm_votes": 12,
+                "total": 710
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 116,
+                "reconfirm_votes": 0,
+                "total": 116
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 21,
+                "reconfirm_votes": 0,
+                "total": 21
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 5,
+                "reconfirm_votes": 0,
+                "total": 5
+            }
+        ]
+    },
+    {
+        "id": 62,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 61",
+        "vote_type": "관내투표",
+        "valid_votes": 1355,
+        "invalid_votes": 0,
+        "total_votes": 1355,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 639,
+                "reconfirm_votes": 12,
+                "total": 651
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 549,
+                "reconfirm_votes": 0,
+                "total": 549
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 121,
+                "reconfirm_votes": 2,
+                "total": 123
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 15,
+                "reconfirm_votes": 16,
+                "total": 31
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 63,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 62",
+        "vote_type": "관내투표",
+        "valid_votes": 1246,
+        "invalid_votes": 0,
+        "total_votes": 1246,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 524,
+                "reconfirm_votes": 0,
+                "total": 524
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 627,
+                "reconfirm_votes": 0,
+                "total": 627
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 79,
+                "reconfirm_votes": 0,
+                "total": 79
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 14,
+                "reconfirm_votes": 0,
+                "total": 14
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 0,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 64,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 63",
+        "vote_type": "관내투표",
+        "valid_votes": 8460,
+        "invalid_votes": 0,
+        "total_votes": 8460,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 4901,
+                "reconfirm_votes": 53,
+                "total": 4954
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1702,
+                "reconfirm_votes": 193,
+                "total": 1895
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 691,
+                "reconfirm_votes": 764,
+                "total": 1455
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 72,
+                "reconfirm_votes": 79,
+                "total": 151
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 2,
+                "total": 5
+            }
+        ]
+    },
+    {
+        "id": 65,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 64",
+        "vote_type": "관내투표",
+        "valid_votes": 1722,
+        "invalid_votes": 0,
+        "total_votes": 1722,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 752,
+                "reconfirm_votes": 0,
+                "total": 752
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 762,
+                "reconfirm_votes": 0,
+                "total": 762
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 180,
+                "reconfirm_votes": 0,
+                "total": 180
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 25,
+                "reconfirm_votes": 0,
+                "total": 25
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 0,
+                "total": 3
+            }
+        ]
+    },
+    {
+        "id": 66,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 65",
+        "vote_type": "관내투표",
+        "valid_votes": 613,
+        "invalid_votes": 0,
+        "total_votes": 613,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 145,
+                "reconfirm_votes": 0,
+                "total": 145
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 444,
+                "reconfirm_votes": 0,
+                "total": 444
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 18,
+                "reconfirm_votes": 0,
+                "total": 18
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 5,
+                "reconfirm_votes": 0,
+                "total": 5
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 67,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 66",
+        "vote_type": "관내투표",
+        "valid_votes": 1423,
+        "invalid_votes": 0,
+        "total_votes": 1423,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 195,
+                "reconfirm_votes": 0,
+                "total": 195
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 537,
+                "reconfirm_votes": 592,
+                "total": 1129
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 45,
+                "reconfirm_votes": 47,
+                "total": 92
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 5,
+                "reconfirm_votes": 2,
+                "total": 7
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 68,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 67",
+        "vote_type": "관내투표",
+        "valid_votes": 1179,
+        "invalid_votes": 0,
+        "total_votes": 1179,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 326,
+                "reconfirm_votes": 330,
+                "total": 656
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 449,
+                "reconfirm_votes": 8,
+                "total": 457
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 51,
+                "reconfirm_votes": 0,
+                "total": 51
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 6,
+                "reconfirm_votes": 8,
+                "total": 14
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 69,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 68",
+        "vote_type": "관내투표",
+        "valid_votes": 1173,
+        "invalid_votes": 0,
+        "total_votes": 1173,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 348,
+                "reconfirm_votes": 0,
+                "total": 348
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 739,
+                "reconfirm_votes": 0,
+                "total": 739
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 60,
+                "reconfirm_votes": 3,
+                "total": 63
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 11,
+                "reconfirm_votes": 11,
+                "total": 22
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 70,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 69",
+        "vote_type": "관내투표",
+        "valid_votes": 410,
+        "invalid_votes": 0,
+        "total_votes": 410,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 129,
+                "reconfirm_votes": 0,
+                "total": 129
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 266,
+                "reconfirm_votes": 0,
+                "total": 266
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 13,
+                "reconfirm_votes": 0,
+                "total": 13
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 71,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 70",
+        "vote_type": "관내투표",
+        "valid_votes": 2341,
+        "invalid_votes": 0,
+        "total_votes": 2341,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1078,
+                "reconfirm_votes": 16,
+                "total": 1094
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1009,
+                "reconfirm_votes": 17,
+                "total": 1026
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 162,
+                "reconfirm_votes": 4,
+                "total": 166
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 23,
+                "reconfirm_votes": 24,
+                "total": 47
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 4,
+                "total": 8
+            }
+        ]
+    },
+    {
+        "id": 72,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 71",
+        "vote_type": "관내투표",
+        "valid_votes": 323,
+        "invalid_votes": 0,
+        "total_votes": 323,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 112,
+                "reconfirm_votes": 0,
+                "total": 112
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 201,
+                "reconfirm_votes": 0,
+                "total": 201
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 9,
+                "reconfirm_votes": 0,
+                "total": 9
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 73,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 72",
+        "vote_type": "관내투표",
+        "valid_votes": 3178,
+        "invalid_votes": 0,
+        "total_votes": 3178,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 1479,
+                "reconfirm_votes": 14,
+                "total": 1493
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1268,
+                "reconfirm_votes": 18,
+                "total": 1286
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 321,
+                "reconfirm_votes": 5,
+                "total": 326
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 33,
+                "reconfirm_votes": 33,
+                "total": 66
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 7,
+                "reconfirm_votes": 0,
+                "total": 7
+            }
+        ]
+    },
+    {
+        "id": 74,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 73",
+        "vote_type": "관내투표",
+        "valid_votes": 1592,
+        "invalid_votes": 0,
+        "total_votes": 1592,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 562,
+                "reconfirm_votes": 7,
+                "total": 569
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 741,
+                "reconfirm_votes": 18,
+                "total": 759
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 113,
+                "reconfirm_votes": 113,
+                "total": 226
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 17,
+                "reconfirm_votes": 17,
+                "total": 34
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 75,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 74",
+        "vote_type": "관내투표",
+        "valid_votes": 590,
+        "invalid_votes": 0,
+        "total_votes": 590,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 189,
+                "reconfirm_votes": 0,
+                "total": 189
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 381,
+                "reconfirm_votes": 0,
+                "total": 381
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 18,
+                "reconfirm_votes": 0,
+                "total": 18
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 2,
+                "reconfirm_votes": 0,
+                "total": 2
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 76,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 75",
+        "vote_type": "관내투표",
+        "valid_votes": 1091,
+        "invalid_votes": 0,
+        "total_votes": 1091,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 349,
+                "reconfirm_votes": 0,
+                "total": 349
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 639,
+                "reconfirm_votes": 0,
+                "total": 639
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 84,
+                "reconfirm_votes": 2,
+                "total": 86
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 8,
+                "reconfirm_votes": 8,
+                "total": 16
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 77,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 76",
+        "vote_type": "관내투표",
+        "valid_votes": 1115,
+        "invalid_votes": 0,
+        "total_votes": 1115,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 419,
+                "reconfirm_votes": 6,
+                "total": 425
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 596,
+                "reconfirm_votes": 0,
+                "total": 596
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 82,
+                "reconfirm_votes": 0,
+                "total": 82
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 4,
+                "reconfirm_votes": 8,
+                "total": 12
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 78,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 77",
+        "vote_type": "관내투표",
+        "valid_votes": 706,
+        "invalid_votes": 0,
+        "total_votes": 706,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 291,
+                "reconfirm_votes": 4,
+                "total": 295
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 341,
+                "reconfirm_votes": 0,
+                "total": 341
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 53,
+                "reconfirm_votes": 1,
+                "total": 54
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 8,
+                "reconfirm_votes": 8,
+                "total": 16
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 79,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 78",
+        "vote_type": "관내투표",
+        "valid_votes": 1944,
+        "invalid_votes": 0,
+        "total_votes": 1944,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 759,
+                "reconfirm_votes": 0,
+                "total": 759
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 916,
+                "reconfirm_votes": 0,
+                "total": 916
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 210,
+                "reconfirm_votes": 0,
+                "total": 210
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 25,
+                "reconfirm_votes": 0,
+                "total": 25
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 34,
+                "reconfirm_votes": 0,
+                "total": 34
+            }
+        ]
+    },
+    {
+        "id": 80,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 79",
+        "vote_type": "관내투표",
+        "valid_votes": 898,
+        "invalid_votes": 0,
+        "total_votes": 898,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 301,
+                "reconfirm_votes": 0,
+                "total": 301
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 535,
+                "reconfirm_votes": 0,
+                "total": 535
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 54,
+                "reconfirm_votes": 0,
+                "total": 54
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 8,
+                "reconfirm_votes": 0,
+                "total": 8
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 81,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 80",
+        "vote_type": "관내투표",
+        "valid_votes": 2081,
+        "invalid_votes": 0,
+        "total_votes": 2081,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 953,
+                "reconfirm_votes": 0,
+                "total": 953
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 885,
+                "reconfirm_votes": 0,
+                "total": 885
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 167,
+                "reconfirm_votes": 0,
+                "total": 167
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 35,
+                "reconfirm_votes": 35,
+                "total": 70
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 3,
+                "reconfirm_votes": 3,
+                "total": 6
+            }
+        ]
+    },
+    {
+        "id": 82,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 81",
+        "vote_type": "관내투표",
+        "valid_votes": 345,
+        "invalid_votes": 0,
+        "total_votes": 345,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 82,
+                "reconfirm_votes": 0,
+                "total": 82
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 237,
+                "reconfirm_votes": 0,
+                "total": 237
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 21,
+                "reconfirm_votes": 0,
+                "total": 21
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 5,
+                "reconfirm_votes": 0,
+                "total": 5
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 83,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 82",
+        "vote_type": "관내투표",
+        "valid_votes": 3083,
+        "invalid_votes": 0,
+        "total_votes": 3083,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 927,
+                "reconfirm_votes": 932,
+                "total": 1859
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 841,
+                "reconfirm_votes": 0,
+                "total": 841
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 167,
+                "reconfirm_votes": 173,
+                "total": 340
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 19,
+                "reconfirm_votes": 20,
+                "total": 39
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 84,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 83",
+        "vote_type": "관내투표",
+        "valid_votes": 719,
+        "invalid_votes": 0,
+        "total_votes": 719,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 216,
+                "reconfirm_votes": 0,
+                "total": 216
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 451,
+                "reconfirm_votes": 0,
+                "total": 451
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 40,
+                "reconfirm_votes": 0,
+                "total": 40
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 6,
+                "reconfirm_votes": 6,
+                "total": 12
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 85,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 84",
+        "vote_type": "관내투표",
+        "valid_votes": 817,
+        "invalid_votes": 0,
+        "total_votes": 817,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 100,
+                "reconfirm_votes": 5,
+                "total": 105
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 410,
+                "reconfirm_votes": 16,
+                "total": 426
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 26,
+                "reconfirm_votes": 250,
+                "total": 276
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 4,
+                "reconfirm_votes": 4,
+                "total": 8
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 0,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 86,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 85",
+        "vote_type": "관내투표",
+        "valid_votes": 673,
+        "invalid_votes": 0,
+        "total_votes": 673,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 139,
+                "reconfirm_votes": 140,
+                "total": 279
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 356,
+                "reconfirm_votes": 0,
+                "total": 356
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 30,
+                "reconfirm_votes": 2,
+                "total": 32
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 5,
+                "reconfirm_votes": 1,
+                "total": 6
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 87,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 86",
+        "vote_type": "관내투표",
+        "valid_votes": 1283,
+        "invalid_votes": 0,
+        "total_votes": 1283,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 352,
+                "reconfirm_votes": 8,
+                "total": 360
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 722,
+                "reconfirm_votes": 20,
+                "total": 742
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 77,
+                "reconfirm_votes": 77,
+                "total": 154
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 11,
+                "reconfirm_votes": 11,
+                "total": 22
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 4,
+                "total": 5
+            }
+        ]
+    },
+    {
+        "id": 88,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 87",
+        "vote_type": "관내투표",
+        "valid_votes": 932,
+        "invalid_votes": 0,
+        "total_votes": 932,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 302,
+                "reconfirm_votes": 0,
+                "total": 302
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 573,
+                "reconfirm_votes": 0,
+                "total": 573
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 47,
+                "reconfirm_votes": 0,
+                "total": 47
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 8,
+                "reconfirm_votes": 0,
+                "total": 8
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 0,
+                "total": 2
+            }
+        ]
+    },
+    {
+        "id": 89,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 88",
+        "vote_type": "관내투표",
+        "valid_votes": 234,
+        "invalid_votes": 0,
+        "total_votes": 234,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 59,
+                "reconfirm_votes": 2,
+                "total": 61
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 150,
+                "reconfirm_votes": 13,
+                "total": 163
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 5,
+                "reconfirm_votes": 2,
+                "total": 7
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 2,
+                "reconfirm_votes": 1,
+                "total": 3
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 0,
+                "reconfirm_votes": 0,
+                "total": 0
+            }
+        ]
+    },
+    {
+        "id": 90,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 89",
+        "vote_type": "관내투표",
+        "valid_votes": 687,
+        "invalid_votes": 0,
+        "total_votes": 687,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 187,
+                "reconfirm_votes": 3,
+                "total": 190
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 448,
+                "reconfirm_votes": 0,
+                "total": 448
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 40,
+                "reconfirm_votes": 0,
+                "total": 40
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 7,
+                "reconfirm_votes": 1,
+                "total": 8
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 91,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 90",
+        "vote_type": "관내투표",
+        "valid_votes": 1870,
+        "invalid_votes": 0,
+        "total_votes": 1870,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 723,
+                "reconfirm_votes": 0,
+                "total": 723
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 909,
+                "reconfirm_votes": 27,
+                "total": 936
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 162,
+                "reconfirm_votes": 5,
+                "total": 167
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 20,
+                "reconfirm_votes": 20,
+                "total": 40
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 92,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 91",
+        "vote_type": "관내투표",
+        "valid_votes": 1835,
+        "invalid_votes": 0,
+        "total_votes": 1835,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 951,
+                "reconfirm_votes": 0,
+                "total": 951
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 685,
+                "reconfirm_votes": 0,
+                "total": 685
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 163,
+                "reconfirm_votes": 0,
+                "total": 163
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 32,
+                "reconfirm_votes": 0,
+                "total": 32
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 4,
+                "reconfirm_votes": 0,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 93,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 92",
+        "vote_type": "관내투표",
+        "valid_votes": 2592,
+        "invalid_votes": 0,
+        "total_votes": 2592,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 980,
+                "reconfirm_votes": 17,
+                "total": 997
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 1280,
+                "reconfirm_votes": 22,
+                "total": 1302
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 237,
+                "reconfirm_votes": 5,
+                "total": 242
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 23,
+                "reconfirm_votes": 24,
+                "total": 47
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 2,
+                "reconfirm_votes": 2,
+                "total": 4
+            }
+        ]
+    },
+    {
+        "id": 94,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 93",
+        "vote_type": "관내투표",
+        "valid_votes": 1765,
+        "invalid_votes": 0,
+        "total_votes": 1765,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 849,
+                "reconfirm_votes": 12,
+                "total": 861
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 698,
+                "reconfirm_votes": 0,
+                "total": 698
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 141,
+                "reconfirm_votes": 0,
+                "total": 141
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 32,
+                "reconfirm_votes": 32,
+                "total": 64
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 1,
+                "reconfirm_votes": 0,
+                "total": 1
+            }
+        ]
+    },
+    {
+        "id": 95,
+        "voting_place": "충남천안시동남구개표상황표(39189)",
+        "district_name": "충남천안시동남구개표상황표(39189) - 투표구 94",
+        "vote_type": "관내투표",
+        "valid_votes": 19186,
+        "invalid_votes": 0,
+        "total_votes": 19186,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#E74C3C",
+                "sorted_votes": 10771,
+                "reconfirm_votes": 313,
+                "total": 11084
+            },
+            {
+                "name": "김문수",
+                "color": "#3498DB",
+                "sorted_votes": 4951,
+                "reconfirm_votes": 181,
+                "total": 5132
+            },
+            {
+                "name": "이준석",
+                "color": "#2ECC71",
+                "sorted_votes": 2670,
+                "reconfirm_votes": 77,
+                "total": 2747
+            },
+            {
+                "name": "권영국",
+                "color": "#F39C12",
+                "sorted_votes": 185,
+                "reconfirm_votes": 4,
+                "total": 189
+            },
+            {
+                "name": "송진호",
+                "color": "#9B59B6",
+                "sorted_votes": 30,
+                "reconfirm_votes": 4,
+                "total": 34
+            }
+        ]
+    }
+];
+
+        const CANDIDATES = [
+            { name: '이재명', color: '#E74C3C' },
+            { name: '김문수', color: '#3498DB' },
+            { name: '이준석', color: '#2ECC71' },
+            { name: '권영국', color: '#F39C12' },
+            { name: '송진호', color: '#9B59B6' }
+        ];
+
+        function Dashboard() {
+            const [selectedCandidates, setSelectedCandidates] = useState(
+                CANDIDATES.map(c => c.name)
+            );
+
+            // Calculate candidate totals
+            const candidateTotals = useMemo(() => {
+                const totals = {};
+                CANDIDATES.forEach(c => {
+                    totals[c.name] = {
+                        sorted: 0,
+                        reconfirm: 0,
+                        total: 0
+                    };
+                });
+
+                VOTING_DATA.forEach(district => {
+                    district.candidates.forEach(cand => {
+                        if (totals[cand.name]) {
+                            totals[cand.name].sorted += cand.sorted_votes;
+                            totals[cand.name].reconfirm += cand.reconfirm_votes;
+                            totals[cand.name].total += cand.total;
+                        }
+                    });
+                });
+
+                return totals;
+            }, []);
+
+            const toggleCandidate = (name) => {
+                setSelectedCandidates(prev =>
+                    prev.includes(name)
+                        ? prev.filter(c => c !== name)
+                        : [...prev, name]
+                );
+            };
+
+            const selectAll = () => {
+                setSelectedCandidates(CANDIDATES.map(c => c.name));
+            };
+
+            const clearAll = () => {
+                setSelectedCandidates([]);
+            };
+
+            const exportCSV = () => {
+                if (selectedCandidates.length === 0) {
+                    alert('선택된 후보자가 없습니다.');
+                    return;
+                }
+
+                let csv = '투표구,유형,유효투표,무효투표,전체투표';
+                selectedCandidates.forEach(name => {
+                    csv += `,${name}_분류,${name}_재확인,${name}_계`;
+                });
+                csv += '\n';
+
+                VOTING_DATA.forEach(district => {
+                    csv += `"${district.district_name}","${district.vote_type}",${district.valid_votes},${district.invalid_votes},${district.total_votes}`;
+
+                    selectedCandidates.forEach(name => {
+                        const cand = district.candidates.find(c => c.name === name);
+                        if (cand) {
+                            csv += `,${cand.sorted_votes},${cand.reconfirm_votes},${cand.total}`;
+                        } else {
+                            csv += ',0,0,0';
+                        }
+                    });
+
+                    csv += '\n';
+                });
+
+                // Add totals row
+                const totalValid = VOTING_DATA.reduce((sum, d) => sum + d.valid_votes, 0);
+                const totalInvalid = VOTING_DATA.reduce((sum, d) => sum + d.invalid_votes, 0);
+                const totalAll = totalValid + totalInvalid;
+
+                csv += `"합계","전체",${totalValid},${totalInvalid},${totalAll}`;
+
+                selectedCandidates.forEach(name => {
+                    const totals = candidateTotals[name];
+                    csv += `,${totals.sorted},${totals.reconfirm},${totals.total}`;
+                });
+
+                const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `충남천안시동남구개표상황표(39189)_개표상황_${selectedCandidates.length}명_${new Date().toISOString().split('T')[0]}.csv`;
+                link.click();
+            };
+
+            return (
+                <div className="dashboard">
+                    <div className="header">
+                        <h1>충남천안시동남구개표상황표(39189) 개표상황표 분석 대시보드</h1>
+                        <div className="subtitle">제21대 대통령선거 투표 심사·집계 분석</div>
+                    </div>
+
+                    <CandidateFilter
+                        selectedCandidates={selectedCandidates}
+                        candidateTotals={candidateTotals}
+                        onToggle={toggleCandidate}
+                        onSelectAll={selectAll}
+                        onClearAll={clearAll}
+                    />
+
+                    <div className="charts-grid">
+                        <ValidInvalidChart data={VOTING_DATA} />
+                        <ReliabilityChart
+                            candidateTotals={candidateTotals}
+                            selectedCandidates={selectedCandidates}
+                        />
+                    </div>
+
+                    <DataTable
+                        data={VOTING_DATA}
+                        selectedCandidates={selectedCandidates}
+                        candidateTotals={candidateTotals}
+                        onExport={exportCSV}
+                    />
+                </div>
+            );
+        }
+
+        function CandidateFilter({
+            selectedCandidates,
+            candidateTotals,
+            onToggle,
+            onSelectAll,
+            onClearAll
+        }) {
+            return (
+                <div className="filter-section">
+                    <div className="filter-header">
+                        <div className="filter-title">후보자 필터</div>
+                        <div className="button-group">
+                            <button className="btn btn-primary" onClick={onSelectAll}>
+                                전체선택
+                            </button>
+                            <button className="btn btn-secondary" onClick={onClearAll}>
+                                전체해제
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="candidates-grid">
+                        {CANDIDATES.map(candidate => {
+                            const isSelected = selectedCandidates.includes(candidate.name);
+                            const totals = candidateTotals[candidate.name];
+
+                            return (
+                                <div
+                                    key={candidate.name}
+                                    className={`candidate-checkbox ${isSelected ? 'selected' : ''}`}
+                                    onClick={() => onToggle(candidate.name)}
+                                    style={{
+                                        borderColor: isSelected ? candidate.color : undefined
+                                    }}
+                                >
+                                    <input type="checkbox" checked={isSelected} readOnly />
+                                    <div
+                                        className="candidate-name"
+                                        style={{ color: candidate.color }}
+                                    >
+                                        {candidate.name}
+                                    </div>
+                                    <div className="candidate-stats">
+                                        <div>분류된표: {totals.sorted.toLocaleString()}</div>
+                                        <div>재검표수: {totals.reconfirm.toLocaleString()}</div>
+                                        <div>계: {totals.total.toLocaleString()}</div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    <div className="selection-info">
+                        {selectedCandidates.length}명의 후보자 선택됨
+                    </div>
+                </div>
+            );
+        }
+
+        function ValidInvalidChart({ data }) {
+            const canvasRef = React.useRef(null);
+            const chartRef = React.useRef(null);
+
+            useEffect(() => {
+                if (!canvasRef.current) return;
+
+                // Group by voting place
+                const placeData = {};
+                data.forEach(district => {
+                    if (!placeData[district.voting_place]) {
+                        placeData[district.voting_place] = {
+                            valid: 0,
+                            invalid: 0
+                        };
+                    }
+                    placeData[district.voting_place].valid += district.valid_votes;
+                    placeData[district.voting_place].invalid += district.invalid_votes;
+                });
+
+                const labels = Object.keys(placeData);
+                const validData = labels.map(label => placeData[label].valid);
+                const invalidData = labels.map(label => placeData[label].invalid);
+
+                if (chartRef.current) {
+                    chartRef.current.destroy();
+                }
+
+                const ctx = canvasRef.current.getContext('2d');
+                chartRef.current = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: '유효투표',
+                                data: validData,
+                                backgroundColor: 'rgba(79, 158, 255, 0.8)',
+                                borderColor: 'rgba(79, 158, 255, 1)',
+                                borderWidth: 2
+                            },
+                            {
+                                label: '무효투표',
+                                data: invalidData,
+                                backgroundColor: 'rgba(255, 107, 107, 0.8)',
+                                borderColor: 'rgba(255, 107, 107, 1)',
+                                borderWidth: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#e8eaf0',
+                                    font: {
+                                        family: "'Noto Sans KR', sans-serif",
+                                        size: 12
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(26, 31, 58, 0.95)',
+                                titleColor: '#e8eaf0',
+                                bodyColor: '#a0a8c0',
+                                borderColor: '#2a3150',
+                                borderWidth: 1,
+                                padding: 12,
+                                titleFont: {
+                                    family: "'Noto Sans KR', sans-serif"
+                                },
+                                bodyFont: {
+                                    family: "'JetBrains Mono', monospace"
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    color: 'rgba(42, 49, 80, 0.5)'
+                                },
+                                ticks: {
+                                    color: '#a0a8c0',
+                                    font: {
+                                        family: "'Noto Sans KR', sans-serif"
+                                    }
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    color: 'rgba(42, 49, 80, 0.5)'
+                                },
+                                ticks: {
+                                    color: '#a0a8c0',
+                                    font: {
+                                        family: "'JetBrains Mono', monospace"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                return () => {
+                    if (chartRef.current) {
+                        chartRef.current.destroy();
+                    }
+                };
+            }, [data]);
+
+            return (
+                <div className="chart-card">
+                    <div className="chart-title">투표구별 유효/무효 투표 현황</div>
+                    <div className="chart-container">
+                        <canvas ref={canvasRef}></canvas>
+                    </div>
+                </div>
+            );
+        }
+
+        function ReliabilityChart({ candidateTotals, selectedCandidates }) {
+            return (
+                <div className="chart-card">
+                    <div className="chart-title">후보자별 득표 신뢰도 분석</div>
+                    <div className="chart-container">
+                        <div className="reliability-bars">
+                            {CANDIDATES.filter(c => selectedCandidates.includes(c.name)).map(candidate => {
+                                const totals = candidateTotals[candidate.name];
+                                const sortedRate = totals.total > 0 ? (totals.sorted / totals.total * 100).toFixed(1) : "0.0";
+                                const reconfirmRate = totals.total > 0 ? (totals.reconfirm / totals.total * 100).toFixed(1) : "0.0";
+
+                                return (
+                                    <div key={candidate.name} className="reliability-item">
+                                        <div className="reliability-header">
+                                            <div className="reliability-name" style={{ color: candidate.color }}>
+                                                {candidate.name}
+                                            </div>
+                                            <div className="reliability-stats">
+                                                분류: {sortedRate}% | 재확인: {reconfirmRate}%
+                                            </div>
+                                        </div>
+                                        <div className="reliability-bar-container">
+                                            <div
+                                                className="reliability-bar"
+                                                style={{
+                                                    width: `${sortedRate}%`,
+                                                    background: `linear-gradient(90deg, ${candidate.color}, ${candidate.color}dd)`
+                                                }}
+                                            >
+                                                {sortedRate}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        {selectedCandidates.length === 0 && (
+                            <div className="empty-state">
+                                <div className="empty-icon">📊</div>
+                                <div className="empty-message">선택된 후보자가 없습니다</div>
+                                <div className="empty-hint">위에서 후보자를 선택해주세요</div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function DataTable({ data, selectedCandidates, candidateTotals, onExport }) {
+            const totals = useMemo(() => {
+                return {
+                    valid: data.reduce((sum, d) => sum + d.valid_votes, 0),
+                    invalid: data.reduce((sum, d) => sum + d.invalid_votes, 0),
+                    total: data.reduce((sum, d) => sum + d.total_votes, 0)
+                };
+            }, [data]);
+
+            return (
+                <div className="table-container">
+                    <div className="table-header">
+                        <div className="chart-title">상세 심사·집계표</div>
+                        <button
+                            className="btn btn-export"
+                            onClick={onExport}
+                            disabled={selectedCandidates.length === 0}
+                        >
+                            📥 CSV 내보내기
+                        </button>
+                    </div>
+
+                    {selectedCandidates.length === 0 ? (
+                        <div className="empty-state">
+                            <div className="empty-icon">📋</div>
+                            <div className="empty-message">선택된 후보자가 없습니다</div>
+                            <div className="empty-hint">후보자를 선택하면 상세 데이터를 확인할 수 있습니다</div>
+                        </div>
+                    ) : (
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th rowSpan="2">투표구</th>
+                                    <th rowSpan="2">유형</th>
+                                    <th rowSpan="2">유효투표</th>
+                                    <th rowSpan="2">무효투표</th>
+                                    <th rowSpan="2">전체투표</th>
+                                    {selectedCandidates.map(name => (
+                                        <th
+                                            key={name}
+                                            colSpan="3"
+                                            className="candidate-header"
+                                            style={{ color: CANDIDATES.find(c => c.name === name)?.color }}
+                                        >
+                                            {name}
+                                        </th>
+                                    ))}
+                                </tr>
+                                <tr>
+                                    {selectedCandidates.map(name => (
+                                        <React.Fragment key={name}>
+                                            <th className="subheader">분류</th>
+                                            <th className="subheader">재확인</th>
+                                            <th className="subheader">계</th>
+                                        </React.Fragment>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {data.map((district, idx) => (
+                                    <tr key={idx}>
+                                        <td>{district.district_name}</td>
+                                        <td>{district.vote_type}</td>
+                                        <td className="number">{district.valid_votes.toLocaleString()}</td>
+                                        <td className="number">{district.invalid_votes.toLocaleString()}</td>
+                                        <td className="number">{district.total_votes.toLocaleString()}</td>
+                                        {selectedCandidates.map(name => {
+                                            const cand = district.candidates.find(c => c.name === name);
+                                            return (
+                                                <React.Fragment key={name}>
+                                                    <td className="candidate-cell number">
+                                                        {cand ? cand.sorted_votes.toLocaleString() : '0'}
+                                                    </td>
+                                                    <td className="candidate-cell number">
+                                                        {cand ? cand.reconfirm_votes.toLocaleString() : '0'}
+                                                    </td>
+                                                    <td className="candidate-cell number">
+                                                        {cand ? cand.total.toLocaleString() : '0'}
+                                                    </td>
+                                                </React.Fragment>
+                                            );
+                                        })}
+                                    </tr>
+                                ))}
+                                <tr className="totals-row">
+                                    <td colSpan="2">합계</td>
+                                    <td className="number">{totals.valid.toLocaleString()}</td>
+                                    <td className="number">{totals.invalid.toLocaleString()}</td>
+                                    <td className="number">{totals.total.toLocaleString()}</td>
+                                    {selectedCandidates.map(name => {
+                                        const t = candidateTotals[name];
+                                        return (
+                                            <React.Fragment key={name}>
+                                                <td className="candidate-cell number">{t.sorted.toLocaleString()}</td>
+                                                <td className="candidate-cell number">{t.reconfirm.toLocaleString()}</td>
+                                                <td className="candidate-cell number">{t.total.toLocaleString()}</td>
+                                            </React.Fragment>
+                                        );
+                                    })}
+                                </tr>
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<Dashboard />);
+    </script>
+</body>
+
+</html>
