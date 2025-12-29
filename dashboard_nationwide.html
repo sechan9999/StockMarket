@@ -457,38 +457,12 @@
                 flex-wrap: wrap;
             }
         }
-
-        .province-nav {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 24px;
-            padding: 12px;
-            background: #1a1f3a;
-            border-radius: 8px;
-            border: 1px solid #2a3150;
-        }
-
-        .nav-tab {
-            padding: 6px 12px;
-            border-radius: 4px;
-            color: #a0a8c0;
-            text-decoration: none;
-            transition: all 0.2s;
-            font-size: 13px;
-            border: 1px solid transparent;
-        }
-
-        .nav-tab:hover {
-            background: #2a3150;
-            color: #e8eaf0;
-        }
-
-        .nav-tab.active {
-            background: #4f9eff;
-            color: white;
-            font-weight: bold;
-        }
+    
+        .province-nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; padding: 12px; background: #1a1f3a; border-radius: 8px; border: 1px solid #2a3150; }
+        .nav-tab { padding: 6px 12px; border-radius: 4px; color: #a0a8c0; text-decoration: none; transition: all 0.2s; font-size: 13px; border: 1px solid transparent; }
+        .nav-tab:hover { background: #2a3150; color: #e8eaf0; }
+        .nav-tab.active { background: #4f9eff; color: white; font-weight: bold; }
+    
     </style>
 </head>
 
@@ -500,822 +474,822 @@
 
         // Sample data embedded
         const VOTING_DATA = [
+    {
+        "id": "강원",
+        "voting_place": "전국",
+        "district_name": "강원",
+        "vote_type": "시·도별 취합",
+        "valid_votes": 1021784,
+        "invalid_votes": 0,
+        "total_votes": 1021784,
+        "candidates": [
             {
-                "id": "강원",
-                "voting_place": "전국",
-                "district_name": "강원",
-                "vote_type": "시·도별+취합",
-                "valid_votes": 1021784,
-                "invalid_votes": 0,
-                "total_votes": 1021784,
-                "candidates": [
-                    {
-                        "name": "이재명",
-                        "color": "#E74C3C",
-                        "sorted_votes": 441735,
-                        "reconfirm_votes": 7426,
-                        "total": 449161
-                    },
-                    {
-                        "name": "김문수",
-                        "color": "#3498DB",
-                        "sorted_votes": 454222,
-                        "reconfirm_votes": 29138,
-                        "total": 483360
-                    },
-                    {
-                        "name": "이준석",
-                        "color": "#2ECC71",
-                        "sorted_votes": 62629,
-                        "reconfirm_votes": 16075,
-                        "total": 78704
-                    },
-                    {
-                        "name": "권영국",
-                        "color": "#F39C12",
-                        "sorted_votes": 2674,
-                        "reconfirm_votes": 6748,
-                        "total": 9422
-                    },
-                    {
-                        "name": "송진호",
-                        "color": "#9B59B6",
-                        "sorted_votes": 234,
-                        "reconfirm_votes": 903,
-                        "total": 1137
-                    }
-                ]
+                "name": "이재명",
+                "color": "#3498DB",
+                "sorted_votes": 441735,
+                "reconfirm_votes": 7426,
+                "total": 449161
             },
             {
-                "id": "경기",
-                "voting_place": "전국",
-                "district_name": "경기",
-                "vote_type": "시·도별+취합",
-                "valid_votes": 9234633,
-                "invalid_votes": 0,
-                "total_votes": 9234633,
-                "candidates": [
-                    {
-                        "name": "이재명",
-                        "color": "#E74C3C",
-                        "sorted_votes": 4725085,
-                        "reconfirm_votes": 96063,
-                        "total": 4821148
-                    },
-                    {
-                        "name": "김문수",
-                        "color": "#3498DB",
-                        "sorted_votes": 1844492,
-                        "reconfirm_votes": 1660128,
-                        "total": 3504620
-                    },
-                    {
-                        "name": "이준석",
-                        "color": "#2ECC71",
-                        "sorted_votes": 643895,
-                        "reconfirm_votes": 172540,
-                        "total": 816435
-                    },
-                    {
-                        "name": "권영국",
-                        "color": "#F39C12",
-                        "sorted_votes": 6461,
-                        "reconfirm_votes": 77613,
-                        "total": 84074
-                    },
-                    {
-                        "name": "송진호",
-                        "color": "#9B59B6",
-                        "sorted_votes": 1496,
-                        "reconfirm_votes": 6860,
-                        "total": 8356
-                    }
-                ]
+                "name": "김문수",
+                "color": "#E74C3C",
+                "sorted_votes": 454222,
+                "reconfirm_votes": 29138,
+                "total": 483360
             },
             {
-                "id": "경남",
-                "voting_place": "전국",
-                "district_name": "경남",
-                "vote_type": "시·도별+취합",
-                "valid_votes": 2161642,
-                "invalid_votes": 0,
-                "total_votes": 2161642,
-                "candidates": [
-                    {
-                        "name": "이재명",
-                        "color": "#E74C3C",
-                        "sorted_votes": 835772,
-                        "reconfirm_votes": 15961,
-                        "total": 851733
-                    },
-                    {
-                        "name": "김문수",
-                        "color": "#3498DB",
-                        "sorted_votes": 1064431,
-                        "reconfirm_votes": 59412,
-                        "total": 1123843
-                    },
-                    {
-                        "name": "이준석",
-                        "color": "#2ECC71",
-                        "sorted_votes": 130611,
-                        "reconfirm_votes": 30968,
-                        "total": 161579
-                    },
-                    {
-                        "name": "권영국",
-                        "color": "#F39C12",
-                        "sorted_votes": 7773,
-                        "reconfirm_votes": 14036,
-                        "total": 21809
-                    },
-                    {
-                        "name": "송진호",
-                        "color": "#9B59B6",
-                        "sorted_votes": 582,
-                        "reconfirm_votes": 2096,
-                        "total": 2678
-                    }
-                ]
+                "name": "이준석",
+                "color": "#F39C12",
+                "sorted_votes": 62629,
+                "reconfirm_votes": 16075,
+                "total": 78704
             },
             {
-                "id": "경북",
-                "voting_place": "전국",
-                "district_name": "경북",
-                "vote_type": "시·도별+취합",
-                "valid_votes": 1734043,
-                "invalid_votes": 0,
-                "total_votes": 1734043,
-                "candidates": [
-                    {
-                        "name": "이재명",
-                        "color": "#E74C3C",
-                        "sorted_votes": 435903,
-                        "reconfirm_votes": 6780,
-                        "total": 442683
-                    },
-                    {
-                        "name": "김문수",
-                        "color": "#3498DB",
-                        "sorted_votes": 1098034,
-                        "reconfirm_votes": 61560,
-                        "total": 1159594
-                    },
-                    {
-                        "name": "이준석",
-                        "color": "#2ECC71",
-                        "sorted_votes": 12532,
-                        "reconfirm_votes": 103562,
-                        "total": 116094
-                    },
-                    {
-                        "name": "권영국",
-                        "color": "#F39C12",
-                        "sorted_votes": 5287,
-                        "reconfirm_votes": 8597,
-                        "total": 13884
-                    },
-                    {
-                        "name": "송진호",
-                        "color": "#9B59B6",
-                        "sorted_votes": 407,
-                        "reconfirm_votes": 1381,
-                        "total": 1788
-                    }
-                ]
+                "name": "권영국",
+                "color": "#F1C40F",
+                "sorted_votes": 2674,
+                "reconfirm_votes": 6748,
+                "total": 9422
             },
             {
-                "id": "광주",
-                "voting_place": "전국",
-                "district_name": "광주",
-                "vote_type": "시·도별+취합",
-                "valid_votes": 996424,
-                "invalid_votes": 0,
-                "total_votes": 996424,
-                "candidates": [
-                    {
-                        "name": "이재명",
-                        "color": "#E74C3C",
-                        "sorted_votes": 813174,
-                        "reconfirm_votes": 31508,
-                        "total": 844682
-                    },
-                    {
-                        "name": "김문수",
-                        "color": "#3498DB",
-                        "sorted_votes": 70150,
-                        "reconfirm_votes": 9787,
-                        "total": 79937
-                    },
-                    {
-                        "name": "이준석",
-                        "color": "#2ECC71",
-                        "sorted_votes": 3861,
-                        "reconfirm_votes": 58243,
-                        "total": 62104
-                    },
-                    {
-                        "name": "권영국",
-                        "color": "#F39C12",
-                        "sorted_votes": 4113,
-                        "reconfirm_votes": 4654,
-                        "total": 8767
-                    },
-                    {
-                        "name": "송진호",
-                        "color": "#9B59B6",
-                        "sorted_votes": 183,
-                        "reconfirm_votes": 751,
-                        "total": 934
-                    }
-                ]
-            },
-            {
-                "id": "대구",
-                "voting_place": "전국",
-                "district_name": "대구",
-                "vote_type": "시·도별+취합",
-                "valid_votes": 1632312,
-                "invalid_votes": 0,
-                "total_votes": 1632312,
-                "candidates": [
-                    {
-                        "name": "이재명",
-                        "color": "#E74C3C",
-                        "sorted_votes": 375033,
-                        "reconfirm_votes": 4097,
-                        "total": 379130
-                    },
-                    {
-                        "name": "김문수",
-                        "color": "#3498DB",
-                        "sorted_votes": 1068839,
-                        "reconfirm_votes": 35074,
-                        "total": 1103913
-                    },
-                    {
-                        "name": "이준석",
-                        "color": "#2ECC71",
-                        "sorted_votes": 108597,
-                        "reconfirm_votes": 26779,
-                        "total": 135376
-                    },
-                    {
-                        "name": "권영국",
-                        "color": "#F39C12",
-                        "sorted_votes": 103,
-                        "reconfirm_votes": 12428,
-                        "total": 12531
-                    },
-                    {
-                        "name": "송진호",
-                        "color": "#9B59B6",
-                        "sorted_votes": 285,
-                        "reconfirm_votes": 1077,
-                        "total": 1362
-                    }
-                ]
-            },
-            {
-                "id": "대전",
-                "voting_place": "전국",
-                "district_name": "대전",
-                "vote_type": "시·도별+취합",
-                "valid_votes": 969608,
-                "invalid_votes": 0,
-                "total_votes": 969608,
-                "candidates": [
-                    {
-                        "name": "이재명",
-                        "color": "#E74C3C",
-                        "sorted_votes": 456162,
-                        "reconfirm_votes": 14159,
-                        "total": 470321
-                    },
-                    {
-                        "name": "김문수",
-                        "color": "#3498DB",
-                        "sorted_votes": 363709,
-                        "reconfirm_votes": 29840,
-                        "total": 393549
-                    },
-                    {
-                        "name": "이준석",
-                        "color": "#2ECC71",
-                        "sorted_votes": 85568,
-                        "reconfirm_votes": 9156,
-                        "total": 94724
-                    },
-                    {
-                        "name": "권영국",
-                        "color": "#F39C12",
-                        "sorted_votes": 5083,
-                        "reconfirm_votes": 4822,
-                        "total": 9905
-                    },
-                    {
-                        "name": "송진호",
-                        "color": "#9B59B6",
-                        "sorted_votes": 233,
-                        "reconfirm_votes": 876,
-                        "total": 1109
-                    }
-                ]
-            },
-            {
-                "id": "부산",
-                "voting_place": "전국",
-                "district_name": "부산",
-                "vote_type": "시·도별+취합",
-                "valid_votes": 2230212,
-                "invalid_votes": 0,
-                "total_votes": 2230212,
-                "candidates": [
-                    {
-                        "name": "이재명",
-                        "color": "#E74C3C",
-                        "sorted_votes": 879834,
-                        "reconfirm_votes": 15379,
-                        "total": 895213
-                    },
-                    {
-                        "name": "김문수",
-                        "color": "#3498DB",
-                        "sorted_votes": 1115168,
-                        "reconfirm_votes": 31070,
-                        "total": 1146238
-                    },
-                    {
-                        "name": "이준석",
-                        "color": "#2ECC71",
-                        "sorted_votes": 147408,
-                        "reconfirm_votes": 21065,
-                        "total": 168473
-                    },
-                    {
-                        "name": "권영국",
-                        "color": "#F39C12",
-                        "sorted_votes": 7902,
-                        "reconfirm_votes": 10287,
-                        "total": 18189
-                    },
-                    {
-                        "name": "송진호",
-                        "color": "#9B59B6",
-                        "sorted_votes": 315,
-                        "reconfirm_votes": 1784,
-                        "total": 2099
-                    }
-                ]
-            },
-            {
-                "id": "서울",
-                "voting_place": "전국",
-                "district_name": "서울",
-                "vote_type": "시·도별+취합",
-                "valid_votes": 6589108,
-                "invalid_votes": 0,
-                "total_votes": 6589108,
-                "candidates": [
-                    {
-                        "name": "이재명",
-                        "color": "#E74C3C",
-                        "sorted_votes": 3042663,
-                        "reconfirm_votes": 62796,
-                        "total": 3105459
-                    },
-                    {
-                        "name": "김문수",
-                        "color": "#3498DB",
-                        "sorted_votes": 2571555,
-                        "reconfirm_votes": 166850,
-                        "total": 2738405
-                    },
-                    {
-                        "name": "이준석",
-                        "color": "#2ECC71",
-                        "sorted_votes": 578481,
-                        "reconfirm_votes": 76865,
-                        "total": 655346
-                    },
-                    {
-                        "name": "권영국",
-                        "color": "#F39C12",
-                        "sorted_votes": 46505,
-                        "reconfirm_votes": 37395,
-                        "total": 83900
-                    },
-                    {
-                        "name": "송진호",
-                        "color": "#9B59B6",
-                        "sorted_votes": 935,
-                        "reconfirm_votes": 5063,
-                        "total": 5998
-                    }
-                ]
-            },
-            {
-                "id": "세종",
-                "voting_place": "전국",
-                "district_name": "세종",
-                "vote_type": "시·도별+취합",
-                "valid_votes": 252785,
-                "invalid_votes": 0,
-                "total_votes": 252785,
-                "candidates": [
-                    {
-                        "name": "이재명",
-                        "color": "#E74C3C",
-                        "sorted_votes": 139489,
-                        "reconfirm_votes": 1131,
-                        "total": 140620
-                    },
-                    {
-                        "name": "김문수",
-                        "color": "#3498DB",
-                        "sorted_votes": 79409,
-                        "reconfirm_votes": 4556,
-                        "total": 83965
-                    },
-                    {
-                        "name": "이준석",
-                        "color": "#2ECC71",
-                        "sorted_votes": 20630,
-                        "reconfirm_votes": 4374,
-                        "total": 25004
-                    },
-                    {
-                        "name": "권영국",
-                        "color": "#F39C12",
-                        "sorted_votes": 1346,
-                        "reconfirm_votes": 1615,
-                        "total": 2961
-                    },
-                    {
-                        "name": "송진호",
-                        "color": "#9B59B6",
-                        "sorted_votes": 33,
-                        "reconfirm_votes": 202,
-                        "total": 235
-                    }
-                ]
-            },
-            {
-                "id": "울산",
-                "voting_place": "전국",
-                "district_name": "울산",
-                "vote_type": "시·도별+취합",
-                "valid_votes": 742375,
-                "invalid_votes": 0,
-                "total_votes": 742375,
-                "candidates": [
-                    {
-                        "name": "이재명",
-                        "color": "#E74C3C",
-                        "sorted_votes": 307867,
-                        "reconfirm_votes": 7953,
-                        "total": 315820
-                    },
-                    {
-                        "name": "김문수",
-                        "color": "#3498DB",
-                        "sorted_votes": 342933,
-                        "reconfirm_votes": 10247,
-                        "total": 353180
-                    },
-                    {
-                        "name": "이준석",
-                        "color": "#2ECC71",
-                        "sorted_votes": 56641,
-                        "reconfirm_votes": 6536,
-                        "total": 63177
-                    },
-                    {
-                        "name": "권영국",
-                        "color": "#F39C12",
-                        "sorted_votes": 4668,
-                        "reconfirm_votes": 4631,
-                        "total": 9299
-                    },
-                    {
-                        "name": "송진호",
-                        "color": "#9B59B6",
-                        "sorted_votes": 127,
-                        "reconfirm_votes": 772,
-                        "total": 899
-                    }
-                ]
-            },
-            {
-                "id": "인천",
-                "voting_place": "전국",
-                "district_name": "인천",
-                "vote_type": "시·도별+취합",
-                "valid_votes": 2020827,
-                "invalid_votes": 0,
-                "total_votes": 2020827,
-                "candidates": [
-                    {
-                        "name": "이재명",
-                        "color": "#E74C3C",
-                        "sorted_votes": 985065,
-                        "reconfirm_votes": 59230,
-                        "total": 1044295
-                    },
-                    {
-                        "name": "김문수",
-                        "color": "#3498DB",
-                        "sorted_votes": 738400,
-                        "reconfirm_votes": 38552,
-                        "total": 776952
-                    },
-                    {
-                        "name": "이준석",
-                        "color": "#2ECC71",
-                        "sorted_votes": 155703,
-                        "reconfirm_votes": 21036,
-                        "total": 176739
-                    },
-                    {
-                        "name": "권영국",
-                        "color": "#F39C12",
-                        "sorted_votes": 10874,
-                        "reconfirm_votes": 9869,
-                        "total": 20743
-                    },
-                    {
-                        "name": "송진호",
-                        "color": "#9B59B6",
-                        "sorted_votes": 160,
-                        "reconfirm_votes": 1938,
-                        "total": 2098
-                    }
-                ]
-            },
-            {
-                "id": "전남",
-                "voting_place": "전국",
-                "district_name": "전남",
-                "vote_type": "시·도별+취합",
-                "valid_votes": 1294843,
-                "invalid_votes": 0,
-                "total_votes": 1294843,
-                "candidates": [
-                    {
-                        "name": "이재명",
-                        "color": "#E74C3C",
-                        "sorted_votes": 1091722,
-                        "reconfirm_votes": 20219,
-                        "total": 1111941
-                    },
-                    {
-                        "name": "김문수",
-                        "color": "#3498DB",
-                        "sorted_votes": 67131,
-                        "reconfirm_votes": 43493,
-                        "total": 110624
-                    },
-                    {
-                        "name": "이준석",
-                        "color": "#2ECC71",
-                        "sorted_votes": 47538,
-                        "reconfirm_votes": 13284,
-                        "total": 60822
-                    },
-                    {
-                        "name": "권영국",
-                        "color": "#F39C12",
-                        "sorted_votes": 4018,
-                        "reconfirm_votes": 5334,
-                        "total": 9352
-                    },
-                    {
-                        "name": "송진호",
-                        "color": "#9B59B6",
-                        "sorted_votes": 1646,
-                        "reconfirm_votes": 458,
-                        "total": 2104
-                    }
-                ]
-            },
-            {
-                "id": "전북",
-                "voting_place": "전국",
-                "district_name": "전북",
-                "vote_type": "시·도별+취합",
-                "valid_votes": 1238009,
-                "invalid_votes": 0,
-                "total_votes": 1238009,
-                "candidates": [
-                    {
-                        "name": "이재명",
-                        "color": "#E74C3C",
-                        "sorted_votes": 975783,
-                        "reconfirm_votes": 47489,
-                        "total": 1023272
-                    },
-                    {
-                        "name": "김문수",
-                        "color": "#3498DB",
-                        "sorted_votes": 94610,
-                        "reconfirm_votes": 40386,
-                        "total": 134996
-                    },
-                    {
-                        "name": "이준석",
-                        "color": "#2ECC71",
-                        "sorted_votes": 43481,
-                        "reconfirm_votes": 24480,
-                        "total": 67961
-                    },
-                    {
-                        "name": "권영국",
-                        "color": "#F39C12",
-                        "sorted_votes": 4512,
-                        "reconfirm_votes": 5549,
-                        "total": 10061
-                    },
-                    {
-                        "name": "송진호",
-                        "color": "#9B59B6",
-                        "sorted_votes": 6,
-                        "reconfirm_votes": 1713,
-                        "total": 1719
-                    }
-                ]
-            },
-            {
-                "id": "제주",
-                "voting_place": "전국",
-                "district_name": "제주",
-                "vote_type": "시·도별+취합",
-                "valid_votes": 417647,
-                "invalid_votes": 0,
-                "total_votes": 417647,
-                "candidates": [
-                    {
-                        "name": "이재명",
-                        "color": "#E74C3C",
-                        "sorted_votes": 222295,
-                        "reconfirm_votes": 6434,
-                        "total": 228729
-                    },
-                    {
-                        "name": "김문수",
-                        "color": "#3498DB",
-                        "sorted_votes": 141169,
-                        "reconfirm_votes": 4121,
-                        "total": 145290
-                    },
-                    {
-                        "name": "이준석",
-                        "color": "#2ECC71",
-                        "sorted_votes": 35704,
-                        "reconfirm_votes": 1205,
-                        "total": 36909
-                    },
-                    {
-                        "name": "권영국",
-                        "color": "#F39C12",
-                        "sorted_votes": 5945,
-                        "reconfirm_votes": 246,
-                        "total": 6191
-                    },
-                    {
-                        "name": "송진호",
-                        "color": "#9B59B6",
-                        "sorted_votes": 479,
-                        "reconfirm_votes": 49,
-                        "total": 528
-                    }
-                ]
-            },
-            {
-                "id": "충남",
-                "voting_place": "전국",
-                "district_name": "충남",
-                "vote_type": "시·도별+취합",
-                "valid_votes": 1386928,
-                "invalid_votes": 0,
-                "total_votes": 1386928,
-                "candidates": [
-                    {
-                        "name": "이재명",
-                        "color": "#E74C3C",
-                        "sorted_votes": 650269,
-                        "reconfirm_votes": 11047,
-                        "total": 661316
-                    },
-                    {
-                        "name": "김문수",
-                        "color": "#3498DB",
-                        "sorted_votes": 569342,
-                        "reconfirm_votes": 30766,
-                        "total": 600108
-                    },
-                    {
-                        "name": "이준석",
-                        "color": "#2ECC71",
-                        "sorted_votes": 17017,
-                        "reconfirm_votes": 94075,
-                        "total": 111092
-                    },
-                    {
-                        "name": "권영국",
-                        "color": "#F39C12",
-                        "sorted_votes": 5014,
-                        "reconfirm_votes": 7879,
-                        "total": 12893
-                    },
-                    {
-                        "name": "송진호",
-                        "color": "#9B59B6",
-                        "sorted_votes": 360,
-                        "reconfirm_votes": 1159,
-                        "total": 1519
-                    }
-                ]
-            },
-            {
-                "id": "충북",
-                "voting_place": "전국",
-                "district_name": "충북",
-                "vote_type": "시·도별+취합",
-                "valid_votes": 1057436,
-                "invalid_votes": 0,
-                "total_votes": 1057436,
-                "candidates": [
-                    {
-                        "name": "이재명",
-                        "color": "#E74C3C",
-                        "sorted_votes": 498846,
-                        "reconfirm_votes": 3144,
-                        "total": 501990
-                    },
-                    {
-                        "name": "김문수",
-                        "color": "#3498DB",
-                        "sorted_votes": 434606,
-                        "reconfirm_votes": 22459,
-                        "total": 457065
-                    },
-                    {
-                        "name": "이준석",
-                        "color": "#2ECC71",
-                        "sorted_votes": 6999,
-                        "reconfirm_votes": 79985,
-                        "total": 86984
-                    },
-                    {
-                        "name": "권영국",
-                        "color": "#F39C12",
-                        "sorted_votes": 4757,
-                        "reconfirm_votes": 5412,
-                        "total": 10169
-                    },
-                    {
-                        "name": "송진호",
-                        "color": "#9B59B6",
-                        "sorted_votes": 253,
-                        "reconfirm_votes": 975,
-                        "total": 1228
-                    }
-                ]
+                "name": "송진호",
+                "color": "#2ECC71",
+                "sorted_votes": 234,
+                "reconfirm_votes": 903,
+                "total": 1137
             }
-        ];
+        ]
+    },
+    {
+        "id": "경기",
+        "voting_place": "전국",
+        "district_name": "경기",
+        "vote_type": "시·도별 취합",
+        "valid_votes": 9234633,
+        "invalid_votes": 0,
+        "total_votes": 9234633,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#3498DB",
+                "sorted_votes": 4725085,
+                "reconfirm_votes": 96063,
+                "total": 4821148
+            },
+            {
+                "name": "김문수",
+                "color": "#E74C3C",
+                "sorted_votes": 1844492,
+                "reconfirm_votes": 1660128,
+                "total": 3504620
+            },
+            {
+                "name": "이준석",
+                "color": "#F39C12",
+                "sorted_votes": 643895,
+                "reconfirm_votes": 172540,
+                "total": 816435
+            },
+            {
+                "name": "권영국",
+                "color": "#F1C40F",
+                "sorted_votes": 6461,
+                "reconfirm_votes": 77613,
+                "total": 84074
+            },
+            {
+                "name": "송진호",
+                "color": "#2ECC71",
+                "sorted_votes": 1496,
+                "reconfirm_votes": 6860,
+                "total": 8356
+            }
+        ]
+    },
+    {
+        "id": "경남",
+        "voting_place": "전국",
+        "district_name": "경남",
+        "vote_type": "시·도별 취합",
+        "valid_votes": 2161642,
+        "invalid_votes": 0,
+        "total_votes": 2161642,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#3498DB",
+                "sorted_votes": 835772,
+                "reconfirm_votes": 15961,
+                "total": 851733
+            },
+            {
+                "name": "김문수",
+                "color": "#E74C3C",
+                "sorted_votes": 1064431,
+                "reconfirm_votes": 59412,
+                "total": 1123843
+            },
+            {
+                "name": "이준석",
+                "color": "#F39C12",
+                "sorted_votes": 130611,
+                "reconfirm_votes": 30968,
+                "total": 161579
+            },
+            {
+                "name": "권영국",
+                "color": "#F1C40F",
+                "sorted_votes": 7773,
+                "reconfirm_votes": 14036,
+                "total": 21809
+            },
+            {
+                "name": "송진호",
+                "color": "#2ECC71",
+                "sorted_votes": 582,
+                "reconfirm_votes": 2096,
+                "total": 2678
+            }
+        ]
+    },
+    {
+        "id": "경북",
+        "voting_place": "전국",
+        "district_name": "경북",
+        "vote_type": "시·도별 취합",
+        "valid_votes": 1734043,
+        "invalid_votes": 0,
+        "total_votes": 1734043,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#3498DB",
+                "sorted_votes": 435903,
+                "reconfirm_votes": 6780,
+                "total": 442683
+            },
+            {
+                "name": "김문수",
+                "color": "#E74C3C",
+                "sorted_votes": 1098034,
+                "reconfirm_votes": 61560,
+                "total": 1159594
+            },
+            {
+                "name": "이준석",
+                "color": "#F39C12",
+                "sorted_votes": 12532,
+                "reconfirm_votes": 103562,
+                "total": 116094
+            },
+            {
+                "name": "권영국",
+                "color": "#F1C40F",
+                "sorted_votes": 5287,
+                "reconfirm_votes": 8597,
+                "total": 13884
+            },
+            {
+                "name": "송진호",
+                "color": "#2ECC71",
+                "sorted_votes": 407,
+                "reconfirm_votes": 1381,
+                "total": 1788
+            }
+        ]
+    },
+    {
+        "id": "광주",
+        "voting_place": "전국",
+        "district_name": "광주",
+        "vote_type": "시·도별 취합",
+        "valid_votes": 996424,
+        "invalid_votes": 0,
+        "total_votes": 996424,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#3498DB",
+                "sorted_votes": 813174,
+                "reconfirm_votes": 31508,
+                "total": 844682
+            },
+            {
+                "name": "김문수",
+                "color": "#E74C3C",
+                "sorted_votes": 70150,
+                "reconfirm_votes": 9787,
+                "total": 79937
+            },
+            {
+                "name": "이준석",
+                "color": "#F39C12",
+                "sorted_votes": 3861,
+                "reconfirm_votes": 58243,
+                "total": 62104
+            },
+            {
+                "name": "권영국",
+                "color": "#F1C40F",
+                "sorted_votes": 4113,
+                "reconfirm_votes": 4654,
+                "total": 8767
+            },
+            {
+                "name": "송진호",
+                "color": "#2ECC71",
+                "sorted_votes": 183,
+                "reconfirm_votes": 751,
+                "total": 934
+            }
+        ]
+    },
+    {
+        "id": "대구",
+        "voting_place": "전국",
+        "district_name": "대구",
+        "vote_type": "시·도별 취합",
+        "valid_votes": 1632312,
+        "invalid_votes": 0,
+        "total_votes": 1632312,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#3498DB",
+                "sorted_votes": 375033,
+                "reconfirm_votes": 4097,
+                "total": 379130
+            },
+            {
+                "name": "김문수",
+                "color": "#E74C3C",
+                "sorted_votes": 1068839,
+                "reconfirm_votes": 35074,
+                "total": 1103913
+            },
+            {
+                "name": "이준석",
+                "color": "#F39C12",
+                "sorted_votes": 108597,
+                "reconfirm_votes": 26779,
+                "total": 135376
+            },
+            {
+                "name": "권영국",
+                "color": "#F1C40F",
+                "sorted_votes": 103,
+                "reconfirm_votes": 12428,
+                "total": 12531
+            },
+            {
+                "name": "송진호",
+                "color": "#2ECC71",
+                "sorted_votes": 285,
+                "reconfirm_votes": 1077,
+                "total": 1362
+            }
+        ]
+    },
+    {
+        "id": "대전",
+        "voting_place": "전국",
+        "district_name": "대전",
+        "vote_type": "시·도별 취합",
+        "valid_votes": 969608,
+        "invalid_votes": 0,
+        "total_votes": 969608,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#3498DB",
+                "sorted_votes": 456162,
+                "reconfirm_votes": 14159,
+                "total": 470321
+            },
+            {
+                "name": "김문수",
+                "color": "#E74C3C",
+                "sorted_votes": 363709,
+                "reconfirm_votes": 29840,
+                "total": 393549
+            },
+            {
+                "name": "이준석",
+                "color": "#F39C12",
+                "sorted_votes": 85568,
+                "reconfirm_votes": 9156,
+                "total": 94724
+            },
+            {
+                "name": "권영국",
+                "color": "#F1C40F",
+                "sorted_votes": 5083,
+                "reconfirm_votes": 4822,
+                "total": 9905
+            },
+            {
+                "name": "송진호",
+                "color": "#2ECC71",
+                "sorted_votes": 233,
+                "reconfirm_votes": 876,
+                "total": 1109
+            }
+        ]
+    },
+    {
+        "id": "부산",
+        "voting_place": "전국",
+        "district_name": "부산",
+        "vote_type": "시·도별 취합",
+        "valid_votes": 2230212,
+        "invalid_votes": 0,
+        "total_votes": 2230212,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#3498DB",
+                "sorted_votes": 879834,
+                "reconfirm_votes": 15379,
+                "total": 895213
+            },
+            {
+                "name": "김문수",
+                "color": "#E74C3C",
+                "sorted_votes": 1115168,
+                "reconfirm_votes": 31070,
+                "total": 1146238
+            },
+            {
+                "name": "이준석",
+                "color": "#F39C12",
+                "sorted_votes": 147408,
+                "reconfirm_votes": 21065,
+                "total": 168473
+            },
+            {
+                "name": "권영국",
+                "color": "#F1C40F",
+                "sorted_votes": 7902,
+                "reconfirm_votes": 10287,
+                "total": 18189
+            },
+            {
+                "name": "송진호",
+                "color": "#2ECC71",
+                "sorted_votes": 315,
+                "reconfirm_votes": 1784,
+                "total": 2099
+            }
+        ]
+    },
+    {
+        "id": "서울",
+        "voting_place": "전국",
+        "district_name": "서울",
+        "vote_type": "시·도별 취합",
+        "valid_votes": 6589108,
+        "invalid_votes": 0,
+        "total_votes": 6589108,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#3498DB",
+                "sorted_votes": 3042663,
+                "reconfirm_votes": 62796,
+                "total": 3105459
+            },
+            {
+                "name": "김문수",
+                "color": "#E74C3C",
+                "sorted_votes": 2571555,
+                "reconfirm_votes": 166850,
+                "total": 2738405
+            },
+            {
+                "name": "이준석",
+                "color": "#F39C12",
+                "sorted_votes": 578481,
+                "reconfirm_votes": 76865,
+                "total": 655346
+            },
+            {
+                "name": "권영국",
+                "color": "#F1C40F",
+                "sorted_votes": 46505,
+                "reconfirm_votes": 37395,
+                "total": 83900
+            },
+            {
+                "name": "송진호",
+                "color": "#2ECC71",
+                "sorted_votes": 935,
+                "reconfirm_votes": 5063,
+                "total": 5998
+            }
+        ]
+    },
+    {
+        "id": "세종",
+        "voting_place": "전국",
+        "district_name": "세종",
+        "vote_type": "시·도별 취합",
+        "valid_votes": 252785,
+        "invalid_votes": 0,
+        "total_votes": 252785,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#3498DB",
+                "sorted_votes": 139489,
+                "reconfirm_votes": 1131,
+                "total": 140620
+            },
+            {
+                "name": "김문수",
+                "color": "#E74C3C",
+                "sorted_votes": 79409,
+                "reconfirm_votes": 4556,
+                "total": 83965
+            },
+            {
+                "name": "이준석",
+                "color": "#F39C12",
+                "sorted_votes": 20630,
+                "reconfirm_votes": 4374,
+                "total": 25004
+            },
+            {
+                "name": "권영국",
+                "color": "#F1C40F",
+                "sorted_votes": 1346,
+                "reconfirm_votes": 1615,
+                "total": 2961
+            },
+            {
+                "name": "송진호",
+                "color": "#2ECC71",
+                "sorted_votes": 33,
+                "reconfirm_votes": 202,
+                "total": 235
+            }
+        ]
+    },
+    {
+        "id": "울산",
+        "voting_place": "전국",
+        "district_name": "울산",
+        "vote_type": "시·도별 취합",
+        "valid_votes": 742375,
+        "invalid_votes": 0,
+        "total_votes": 742375,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#3498DB",
+                "sorted_votes": 307867,
+                "reconfirm_votes": 7953,
+                "total": 315820
+            },
+            {
+                "name": "김문수",
+                "color": "#E74C3C",
+                "sorted_votes": 342933,
+                "reconfirm_votes": 10247,
+                "total": 353180
+            },
+            {
+                "name": "이준석",
+                "color": "#F39C12",
+                "sorted_votes": 56641,
+                "reconfirm_votes": 6536,
+                "total": 63177
+            },
+            {
+                "name": "권영국",
+                "color": "#F1C40F",
+                "sorted_votes": 4668,
+                "reconfirm_votes": 4631,
+                "total": 9299
+            },
+            {
+                "name": "송진호",
+                "color": "#2ECC71",
+                "sorted_votes": 127,
+                "reconfirm_votes": 772,
+                "total": 899
+            }
+        ]
+    },
+    {
+        "id": "인천",
+        "voting_place": "전국",
+        "district_name": "인천",
+        "vote_type": "시·도별 취합",
+        "valid_votes": 2020827,
+        "invalid_votes": 0,
+        "total_votes": 2020827,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#3498DB",
+                "sorted_votes": 985065,
+                "reconfirm_votes": 59230,
+                "total": 1044295
+            },
+            {
+                "name": "김문수",
+                "color": "#E74C3C",
+                "sorted_votes": 738400,
+                "reconfirm_votes": 38552,
+                "total": 776952
+            },
+            {
+                "name": "이준석",
+                "color": "#F39C12",
+                "sorted_votes": 155703,
+                "reconfirm_votes": 21036,
+                "total": 176739
+            },
+            {
+                "name": "권영국",
+                "color": "#F1C40F",
+                "sorted_votes": 10874,
+                "reconfirm_votes": 9869,
+                "total": 20743
+            },
+            {
+                "name": "송진호",
+                "color": "#2ECC71",
+                "sorted_votes": 160,
+                "reconfirm_votes": 1938,
+                "total": 2098
+            }
+        ]
+    },
+    {
+        "id": "전남",
+        "voting_place": "전국",
+        "district_name": "전남",
+        "vote_type": "시·도별 취합",
+        "valid_votes": 1294843,
+        "invalid_votes": 0,
+        "total_votes": 1294843,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#3498DB",
+                "sorted_votes": 1091722,
+                "reconfirm_votes": 20219,
+                "total": 1111941
+            },
+            {
+                "name": "김문수",
+                "color": "#E74C3C",
+                "sorted_votes": 67131,
+                "reconfirm_votes": 43493,
+                "total": 110624
+            },
+            {
+                "name": "이준석",
+                "color": "#F39C12",
+                "sorted_votes": 47538,
+                "reconfirm_votes": 13284,
+                "total": 60822
+            },
+            {
+                "name": "권영국",
+                "color": "#F1C40F",
+                "sorted_votes": 4018,
+                "reconfirm_votes": 5334,
+                "total": 9352
+            },
+            {
+                "name": "송진호",
+                "color": "#2ECC71",
+                "sorted_votes": 1646,
+                "reconfirm_votes": 458,
+                "total": 2104
+            }
+        ]
+    },
+    {
+        "id": "전북",
+        "voting_place": "전국",
+        "district_name": "전북",
+        "vote_type": "시·도별 취합",
+        "valid_votes": 1238009,
+        "invalid_votes": 0,
+        "total_votes": 1238009,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#3498DB",
+                "sorted_votes": 975783,
+                "reconfirm_votes": 47489,
+                "total": 1023272
+            },
+            {
+                "name": "김문수",
+                "color": "#E74C3C",
+                "sorted_votes": 94610,
+                "reconfirm_votes": 40386,
+                "total": 134996
+            },
+            {
+                "name": "이준석",
+                "color": "#F39C12",
+                "sorted_votes": 43481,
+                "reconfirm_votes": 24480,
+                "total": 67961
+            },
+            {
+                "name": "권영국",
+                "color": "#F1C40F",
+                "sorted_votes": 4512,
+                "reconfirm_votes": 5549,
+                "total": 10061
+            },
+            {
+                "name": "송진호",
+                "color": "#2ECC71",
+                "sorted_votes": 6,
+                "reconfirm_votes": 1713,
+                "total": 1719
+            }
+        ]
+    },
+    {
+        "id": "제주",
+        "voting_place": "전국",
+        "district_name": "제주",
+        "vote_type": "시·도별 취합",
+        "valid_votes": 417647,
+        "invalid_votes": 0,
+        "total_votes": 417647,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#3498DB",
+                "sorted_votes": 222295,
+                "reconfirm_votes": 6434,
+                "total": 228729
+            },
+            {
+                "name": "김문수",
+                "color": "#E74C3C",
+                "sorted_votes": 141169,
+                "reconfirm_votes": 4121,
+                "total": 145290
+            },
+            {
+                "name": "이준석",
+                "color": "#F39C12",
+                "sorted_votes": 35704,
+                "reconfirm_votes": 1205,
+                "total": 36909
+            },
+            {
+                "name": "권영국",
+                "color": "#F1C40F",
+                "sorted_votes": 5945,
+                "reconfirm_votes": 246,
+                "total": 6191
+            },
+            {
+                "name": "송진호",
+                "color": "#2ECC71",
+                "sorted_votes": 479,
+                "reconfirm_votes": 49,
+                "total": 528
+            }
+        ]
+    },
+    {
+        "id": "충남",
+        "voting_place": "전국",
+        "district_name": "충남",
+        "vote_type": "시·도별 취합",
+        "valid_votes": 1386928,
+        "invalid_votes": 0,
+        "total_votes": 1386928,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#3498DB",
+                "sorted_votes": 650269,
+                "reconfirm_votes": 11047,
+                "total": 661316
+            },
+            {
+                "name": "김문수",
+                "color": "#E74C3C",
+                "sorted_votes": 569342,
+                "reconfirm_votes": 30766,
+                "total": 600108
+            },
+            {
+                "name": "이준석",
+                "color": "#F39C12",
+                "sorted_votes": 17017,
+                "reconfirm_votes": 94075,
+                "total": 111092
+            },
+            {
+                "name": "권영국",
+                "color": "#F1C40F",
+                "sorted_votes": 5014,
+                "reconfirm_votes": 7879,
+                "total": 12893
+            },
+            {
+                "name": "송진호",
+                "color": "#2ECC71",
+                "sorted_votes": 360,
+                "reconfirm_votes": 1159,
+                "total": 1519
+            }
+        ]
+    },
+    {
+        "id": "충북",
+        "voting_place": "전국",
+        "district_name": "충북",
+        "vote_type": "시·도별 취합",
+        "valid_votes": 1057436,
+        "invalid_votes": 0,
+        "total_votes": 1057436,
+        "candidates": [
+            {
+                "name": "이재명",
+                "color": "#3498DB",
+                "sorted_votes": 498846,
+                "reconfirm_votes": 3144,
+                "total": 501990
+            },
+            {
+                "name": "김문수",
+                "color": "#E74C3C",
+                "sorted_votes": 434606,
+                "reconfirm_votes": 22459,
+                "total": 457065
+            },
+            {
+                "name": "이준석",
+                "color": "#F39C12",
+                "sorted_votes": 6999,
+                "reconfirm_votes": 79985,
+                "total": 86984
+            },
+            {
+                "name": "권영국",
+                "color": "#F1C40F",
+                "sorted_votes": 4757,
+                "reconfirm_votes": 5412,
+                "total": 10169
+            },
+            {
+                "name": "송진호",
+                "color": "#2ECC71",
+                "sorted_votes": 253,
+                "reconfirm_votes": 975,
+                "total": 1228
+            }
+        ]
+    }
+];
 
         const CANDIDATES = [
-            { name: '이재명', color: '#E74C3C' },
-            { name: '김문수', color: '#3498DB' },
-            { name: '이준석', color: '#2ECC71' },
-            { name: '권영국', color: '#F39C12' },
-            { name: '송진호', color: '#9B59B6' }
+            { name: '이재명', color: '#3498DB' },
+            { name: '김문수', color: '#E74C3C' },
+            { name: '이준석', color: '#F39C12' },
+            { name: '권영국', color: '#F1C40F' },
+            { name: '송진호', color: '#2ECC71' }
         ];
 
-
+        
         const ProvinceNavigation = () => (
             <div className="province-nav">
-                <a href="dashboard_nationwide.html" className={"nav-tab " + (true ? "active" : "")}>전국</a>
-                <a href="dashboard_province_서울.html" className={"nav-tab " + (false ? "active" : "")}>서울</a>
-                <a href="dashboard_province_부산.html" className={"nav-tab " + (false ? "active" : "")}>부산</a>
-                <a href="dashboard_province_대구.html" className={"nav-tab " + (false ? "active" : "")}>대구</a>
-                <a href="dashboard_province_인천.html" className={"nav-tab " + (false ? "active" : "")}>인천</a>
-                <a href="dashboard_province_광주.html" className={"nav-tab " + (false ? "active" : "")}>광주</a>
-                <a href="dashboard_province_대전.html" className={"nav-tab " + (false ? "active" : "")}>대전</a>
-                <a href="dashboard_province_세종.html" className={"nav-tab " + (false ? "active" : "")}>세종</a>
-                <a href="dashboard_province_경기.html" className={"nav-tab " + (false ? "active" : "")}>경기</a>
-                <a href="dashboard_province_강원.html" className={"nav-tab " + (false ? "active" : "")}>강원</a>
-                <a href="dashboard_province_충북.html" className={"nav-tab " + (false ? "active" : "")}>충북</a>
-                <a href="dashboard_province_충남.html" className={"nav-tab " + (false ? "active" : "")}>충남</a>
-                <a href="dashboard_province_전북.html" className={"nav-tab " + (false ? "active" : "")}>전북</a>
-                <a href="dashboard_province_전남.html" className={"nav-tab " + (false ? "active" : "")}>전남</a>
-                <a href="dashboard_province_경북.html" className={"nav-tab " + (false ? "active" : "")}>경북</a>
-                <a href="dashboard_province_경남.html" className={"nav-tab " + (false ? "active" : "")}>경남</a>
-                <a href="dashboard_province_울산.html" className={"nav-tab " + (false ? "active" : "")}>울산</a>
-                <a href="dashboard_province_제주.html" className={"nav-tab " + (false ? "active" : "")}>제주</a>
+                        <a href="dashboard_nationwide.html" className={"nav-tab " + (true ? "active" : "")}>전국</a>
+                        <a href="dashboard_province_서울.html" className={"nav-tab " + (false ? "active" : "")}>서울</a>
+                        <a href="dashboard_province_부산.html" className={"nav-tab " + (false ? "active" : "")}>부산</a>
+                        <a href="dashboard_province_대구.html" className={"nav-tab " + (false ? "active" : "")}>대구</a>
+                        <a href="dashboard_province_인천.html" className={"nav-tab " + (false ? "active" : "")}>인천</a>
+                        <a href="dashboard_province_광주.html" className={"nav-tab " + (false ? "active" : "")}>광주</a>
+                        <a href="dashboard_province_대전.html" className={"nav-tab " + (false ? "active" : "")}>대전</a>
+                        <a href="dashboard_province_세종.html" className={"nav-tab " + (false ? "active" : "")}>세종</a>
+                        <a href="dashboard_province_경기.html" className={"nav-tab " + (false ? "active" : "")}>경기</a>
+                        <a href="dashboard_province_강원.html" className={"nav-tab " + (false ? "active" : "")}>강원</a>
+                        <a href="dashboard_province_충북.html" className={"nav-tab " + (false ? "active" : "")}>충북</a>
+                        <a href="dashboard_province_충남.html" className={"nav-tab " + (false ? "active" : "")}>충남</a>
+                        <a href="dashboard_province_전북.html" className={"nav-tab " + (false ? "active" : "")}>전북</a>
+                        <a href="dashboard_province_전남.html" className={"nav-tab " + (false ? "active" : "")}>전남</a>
+                        <a href="dashboard_province_경북.html" className={"nav-tab " + (false ? "active" : "")}>경북</a>
+                        <a href="dashboard_province_경남.html" className={"nav-tab " + (false ? "active" : "")}>경남</a>
+                        <a href="dashboard_province_울산.html" className={"nav-tab " + (false ? "active" : "")}>울산</a>
+                        <a href="dashboard_province_제주.html" className={"nav-tab " + (false ? "active" : "")}>제주</a>
             </div>
         );
-
+    
         function Dashboard() {
             const [selectedCandidates, setSelectedCandidates] = useState(
                 CANDIDATES.map(c => c.name)
@@ -1458,11 +1432,6 @@
                             </button>
                             <button className="btn btn-secondary" onClick={onClearAll}>
                                 전체해제
-                            </button>
-                            <button className="btn btn-export" onClick={() => {
-                                window.location.href = 'election_results_complete.xlsx';
-                            }}>
-                                📊 엑셀 다운로드 (18개 탭)
                             </button>
                         </div>
                     </div>
