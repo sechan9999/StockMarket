@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockPulse AI - Intelligent Stock Analysis Platform</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <span>StockPulse<span class="ai-badge">AI</span></span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#analysis">Analysis</a></li>
+                <li><a href="#demo">Demo</a></li>
+            </ul>
+            <button class="cta-button">Get Started</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">
+                <i class="fas fa-robot"></i>
+                Powered by Advanced AI
+            </div>
+            <h1>Intelligent Stock Analysis <br><span class="gradient-text">Powered by AI</span></h1>
+            <p class="hero-subtitle">Combine sentiment analysis, technical indicators, and deep learning predictions for smarter investment decisions.</p>
+            <div class="hero-buttons">
+                <button class="primary-btn">
+                    <i class="fas fa-play"></i>
+                    Try Demo
+                </button>
+                <button class="secondary-btn">
+                    <i class="fas fa-book"></i>
+                    Learn More
+                </button>
+            </div>
+            <div class="hero-stats">
+                <div class="stat">
+                    <span class="stat-value">95%</span>
+                    <span class="stat-label">Accuracy Rate</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">4</span>
+                    <span class="stat-label">Analysis Steps</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">7</span>
+                    <span class="stat-label">Day Forecast</span>
+                </div>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="floating-card card-1">
+                <i class="fas fa-arrow-trend-up"></i>
+                <span>+12.5%</span>
+            </div>
+            <div class="floating-card card-2">
+                <i class="fas fa-brain"></i>
+                <span>AI Processing</span>
+            </div>
+            <div class="floating-card card-3">
+                <i class="fas fa-shield-check"></i>
+                <span>Verified Signal</span>
+            </div>
+            <canvas id="heroChart"></canvas>
+        </div>
+    </section>
+
+    <!-- Pipeline Section -->
+    <section id="features" class="pipeline-section">
+        <div class="section-header">
+            <h2>Our 4-Step AI Analysis Pipeline</h2>
+            <p>A comprehensive approach combining multiple AI techniques for accurate stock predictions</p>
+        </div>
+
+        <div class="pipeline-container">
+            <!-- Step 1: Sentiment Analysis -->
+            <div class="pipeline-step" data-step="1">
+                <div class="step-number">01</div>
+                <div class="step-icon">
+                    <i class="fas fa-comment-dots"></i>
+                </div>
+                <div class="step-content">
+                    <h3>Sentiment Analysis</h3>
+                    <p class="step-tech">FinBERT Model</p>
+                    <p class="step-description">
+                        Uses FinBERT (BERT fine-tuned on financial text) to classify news articles and social media as
+                        <span class="bullish">Bullish</span>, <span class="bearish">Bearish</span>, or <span class="neutral">Neutral</span>
+                        with confidence scores.
+                    </p>
+                    <div class="step-metrics">
+                        <div class="metric">
+                            <span class="metric-value bullish">78%</span>
+                            <span class="metric-label">Bullish</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value bearish">12%</span>
+                            <span class="metric-label">Bearish</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value neutral">10%</span>
+                            <span class="metric-label">Neutral</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="step-visual">
+                    <div class="sentiment-bars">
+                        <div class="sentiment-bar bullish-bar" style="--width: 78%"></div>
+                        <div class="sentiment-bar bearish-bar" style="--width: 12%"></div>
+                        <div class="sentiment-bar neutral-bar" style="--width: 10%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pipeline-connector">
+                <div class="connector-line"></div>
+                <div class="connector-arrow"><i class="fas fa-chevron-down"></i></div>
+            </div>
+
+            <!-- Step 2: Technical Analysis -->
+            <div class="pipeline-step" data-step="2">
+                <div class="step-number">02</div>
+                <div class="step-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="step-content">
+                    <h3>Technical Analysis</h3>
+                    <p class="step-tech">RSI, MACD, Bollinger Bands, Volume</p>
+                    <p class="step-description">
+                        Calculates key technical indicators including RSI, MACD, Bollinger Bands, and volume trends.
+                        Each generates <span class="buy-signal">BUY</span>/<span class="sell-signal">SELL</span>/<span class="hold-signal">HOLD</span> signals with strength metrics.
+                    </p>
+                    <div class="indicators-grid">
+                        <div class="indicator">
+                            <span class="indicator-name">RSI</span>
+                            <span class="indicator-value">42.5</span>
+                            <span class="indicator-signal buy">BUY</span>
+                        </div>
+                        <div class="indicator">
+                            <span class="indicator-name">MACD</span>
+                            <span class="indicator-value">+0.85</span>
+                            <span class="indicator-signal buy">BUY</span>
+                        </div>
+                        <div class="indicator">
+                            <span class="indicator-name">Bollinger</span>
+                            <span class="indicator-value">Lower</span>
+                            <span class="indicator-signal buy">BUY</span>
+                        </div>
+                        <div class="indicator">
+                            <span class="indicator-name">Volume</span>
+                            <span class="indicator-value">+25%</span>
+                            <span class="indicator-signal hold">HOLD</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="step-visual">
+                    <canvas id="technicalChart"></canvas>
+                </div>
+            </div>
+
+            <div class="pipeline-connector">
+                <div class="connector-line"></div>
+                <div class="connector-arrow"><i class="fas fa-chevron-down"></i></div>
+            </div>
+
+            <!-- Step 3: Price Prediction -->
+            <div class="pipeline-step" data-step="3">
+                <div class="step-number">03</div>
+                <div class="step-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <div class="step-content">
+                    <h3>Price Prediction</h3>
+                    <p class="step-tech">2-Layer LSTM Neural Network</p>
+                    <p class="step-description">
+                        Uses a 2-layer LSTM neural network trained on 30-day OHLCV sequences to forecast
+                        <span class="highlight">7-day prices</span> with confidence intervals.
+                    </p>
+                    <div class="lstm-architecture">
+                        <div class="lstm-layer">
+                            <span class="layer-name">Input Layer</span>
+                            <span class="layer-info">30-day OHLCV</span>
+                        </div>
+                        <div class="lstm-arrow">→</div>
+                        <div class="lstm-layer">
+                            <span class="layer-name">LSTM Layer 1</span>
+                            <span class="layer-info">128 units</span>
+                        </div>
+                        <div class="lstm-arrow">→</div>
+                        <div class="lstm-layer">
+                            <span class="layer-name">LSTM Layer 2</span>
+                            <span class="layer-info">64 units</span>
+                        </div>
+                        <div class="lstm-arrow">→</div>
+                        <div class="lstm-layer">
+                            <span class="layer-name">Output</span>
+                            <span class="layer-info">7-day forecast</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="step-visual">
+                    <canvas id="predictionChart"></canvas>
+                </div>
+            </div>
+
+            <div class="pipeline-connector">
+                <div class="connector-line"></div>
+                <div class="connector-arrow"><i class="fas fa-chevron-down"></i></div>
+            </div>
+
+            <!-- Step 4: Recommendation -->
+            <div class="pipeline-step" data-step="4">
+                <div class="step-number">04</div>
+                <div class="step-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="step-content">
+                    <h3>Final Recommendation</h3>
+                    <p class="step-tech">Weighted Ensemble Model</p>
+                    <p class="step-description">
+                        Combines sentiment (<span class="highlight">40% weight</span>) with technical signals
+                        (<span class="highlight">60% weight</span>) into a final rating from
+                        <span class="strong-buy">STRONG BUY</span> to <span class="strong-sell">STRONG SELL</span>.
+                    </p>
+                    <div class="weight-visual">
+                        <div class="weight-bar">
+                            <div class="weight-segment sentiment-weight">
+                                <span>Sentiment 40%</span>
+                            </div>
+                            <div class="weight-segment technical-weight">
+                                <span>Technical 60%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rating-scale">
+                        <div class="rating-item strong-sell-bg">Strong Sell</div>
+                        <div class="rating-item sell-bg">Sell</div>
+                        <div class="rating-item hold-bg">Hold</div>
+                        <div class="rating-item buy-bg">Buy</div>
+                        <div class="rating-item strong-buy-bg active">Strong Buy</div>
+                    </div>
+                </div>
+                <div class="step-visual">
+                    <div class="final-recommendation">
+                        <div class="recommendation-badge strong-buy">
+                            <i class="fas fa-arrow-trend-up"></i>
+                            <span class="rec-label">STRONG BUY</span>
+                            <span class="rec-score">Score: 8.7/10</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Demo Section -->
+    <section id="demo" class="demo-section">
+        <div class="section-header">
+            <h2>Live Analysis Demo</h2>
+            <p>See StockPulse AI in action with real-time stock analysis</p>
+        </div>
+
+        <div class="demo-container">
+            <div class="stock-selector">
+                <label for="stockInput">Enter Stock Symbol:</label>
+                <div class="input-group">
+                    <input type="text" id="stockInput" placeholder="e.g., AAPL, GOOGL, MSFT" value="GOOGL">
+                    <button id="analyzeBtn" class="analyze-btn">
+                        <i class="fas fa-search"></i>
+                        Analyze
+                    </button>
+                </div>
+            </div>
+
+            <div class="demo-results" id="demoResults">
+                <div class="result-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-building"></i> <span id="stockName">Alphabet Inc.</span></h3>
+                        <span class="stock-symbol" id="stockSymbol">GOOGL</span>
+                    </div>
+                    <div class="card-price">
+                        <span class="current-price" id="currentPrice">$175.42</span>
+                        <span class="price-change positive" id="priceChange">+2.34 (+1.35%)</span>
+                    </div>
+                </div>
+
+                <div class="analysis-cards">
+                    <div class="analysis-card sentiment-card">
+                        <div class="card-icon"><i class="fas fa-comment-dots"></i></div>
+                        <h4>Sentiment Score</h4>
+                        <div class="score-display">
+                            <div class="score-circle bullish">
+                                <span id="sentimentScore">78%</span>
+                            </div>
+                            <span class="score-label bullish" id="sentimentLabel">Bullish</span>
+                        </div>
+                        <div class="mini-chart">
+                            <canvas id="sentimentMiniChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="analysis-card technical-card">
+                        <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+                        <h4>Technical Score</h4>
+                        <div class="score-display">
+                            <div class="score-circle buy">
+                                <span id="technicalScore">72%</span>
+                            </div>
+                            <span class="score-label buy" id="technicalLabel">Buy Signal</span>
+                        </div>
+                        <div class="indicator-mini">
+                            <span class="mini-indicator">RSI: 42</span>
+                            <span class="mini-indicator">MACD: +0.85</span>
+                        </div>
+                    </div>
+
+                    <div class="analysis-card prediction-card">
+                        <div class="card-icon"><i class="fas fa-crystal-ball"></i></div>
+                        <h4>7-Day Prediction</h4>
+                        <div class="score-display">
+                            <div class="score-circle positive">
+                                <span id="predictionScore">+5.2%</span>
+                            </div>
+                            <span class="score-label positive" id="predictionLabel">Upward Trend</span>
+                        </div>
+                        <div class="price-target">
+                            Target: <span id="priceTarget">$184.54</span>
+                        </div>
+                    </div>
+
+                    <div class="analysis-card recommendation-card">
+                        <div class="card-icon"><i class="fas fa-star"></i></div>
+                        <h4>Final Rating</h4>
+                        <div class="final-rating strong-buy" id="finalRating">
+                            <i class="fas fa-arrow-trend-up"></i>
+                            <span>STRONG BUY</span>
+                        </div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: 87%"></div>
+                        </div>
+                        <span class="confidence-text">Confidence: <span id="confidenceScore">87%</span></span>
+                    </div>
+                </div>
+
+                <div class="detailed-chart">
+                    <h3><i class="fas fa-chart-area"></i> Price History & Prediction</h3>
+                    <canvas id="mainChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technology Section -->
+    <section id="analysis" class="tech-section">
+        <div class="section-header">
+            <h2>Powered by Cutting-Edge Technology</h2>
+            <p>Our AI stack combines the best in NLP, deep learning, and financial analysis</p>
+        </div>
+
+        <div class="tech-grid">
+            <div class="tech-card">
+                <div class="tech-icon">
+                    <img src="https://huggingface.co/front/assets/huggingface_logo-noborder.svg" alt="Hugging Face" onerror="this.style.display='none'">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h3>FinBERT</h3>
+                <p>State-of-the-art NLP model specifically fine-tuned on financial news and reports for accurate sentiment classification.</p>
+            </div>
+
+            <div class="tech-card">
+                <div class="tech-icon">
+                    <i class="fas fa-network-wired"></i>
+                </div>
+                <h3>LSTM Networks</h3>
+                <p>Long Short-Term Memory neural networks that excel at learning patterns in sequential time-series data.</p>
+            </div>
+
+            <div class="tech-card">
+                <div class="tech-icon">
+                    <i class="fas fa-chart-mixed"></i>
+                </div>
+                <h3>Technical Indicators</h3>
+                <p>Industry-standard indicators including RSI, MACD, Bollinger Bands, and volume analysis for comprehensive market insight.</p>
+            </div>
+
+            <div class="tech-card">
+                <div class="tech-icon">
+                    <i class="fas fa-scale-balanced"></i>
+                </div>
+                <h3>Ensemble Methods</h3>
+                <p>Weighted combination of multiple signals for robust predictions that outperform single-model approaches.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <i class="fas fa-chart-line"></i>
+                <span>StockPulse<span class="ai-badge">AI</span></span>
+            </div>
+            <p class="disclaimer">
+                <i class="fas fa-exclamation-triangle"></i>
+                Disclaimer: This is for educational purposes only. Not financial advice. Always do your own research before investing.
+            </p>
+            <div class="footer-links">
+                <a href="#"><i class="fab fa-github"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-linkedin"></i></a>
+            </div>
+            <p class="copyright">© 2025 StockPulse AI. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
