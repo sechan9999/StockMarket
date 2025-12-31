@@ -1,0 +1,330 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'StockPulse AI - Serverless Stock Analysis Platform'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues: [dev, prod]
+
+  AlphaVantageApiKey:
+    Type: String
+    Description: Alpha Vantage API Key for stock data
+    NoEcho: true
+
+  NewsApiKey:
+    Type: String
+    Description: NewsAPI Key for financial news
+    NoEcho: true
+
+  SenderEmail:
+    Type: String
+    Description: Verified SES email for sending alerts
+    Default: noreply@example.com
+
+Resources:
+  # ==================== DynamoDB ====================
+  SubscribersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'stockpulse-subscribers-${Environment}'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: email
+          AttributeType: S
+      KeySchema:
+        - AttributeName: email
+          KeyType: HASH
+      Tags:
+        - Key: Application
+          Value: StockPulse
+
+  # ==================== IAM Roles ====================
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'stockpulse-lambda-role-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Scan
+                  - dynamodb:Query
+                Resource: !GetAtt SubscribersTable.Arn
+
+        - PolicyName: BedrockAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                Resource: '*'
+
+        - PolicyName: SESAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ses:SendEmail
+                  - ses:SendRawEmail
+                Resource: '*'
+
+  # ==================== Lambda Functions ====================
+  SubscribeFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'stockpulse-subscribe-${Environment}'
+      Runtime: python3.11
+      Handler: subscribe.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          SUBSCRIBERS_TABLE: !Ref SubscribersTable
+      Code:
+        ZipFile: |
+          # Placeholder - deploy actual code separately
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Deploy code'}
+
+  UnsubscribeFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'stockpulse-unsubscribe-${Environment}'
+      Runtime: python3.11
+      Handler: unsubscribe.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          SUBSCRIBERS_TABLE: !Ref SubscribersTable
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Deploy code'}
+
+  AnalyzeFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'stockpulse-analyze-${Environment}'
+      Runtime: python3.11
+      Handler: analyze.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 60
+      MemorySize: 512
+      Environment:
+        Variables:
+          ALPHA_VANTAGE_KEY: !Ref AlphaVantageApiKey
+          NEWS_API_KEY: !Ref NewsApiKey
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Deploy code'}
+
+  DailyDigestFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub 'stockpulse-daily-digest-${Environment}'
+      Runtime: python3.11
+      Handler: daily_digest.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 300
+      MemorySize: 1024
+      Environment:
+        Variables:
+          SUBSCRIBERS_TABLE: !Ref SubscribersTable
+          SENDER_EMAIL: !Ref SenderEmail
+          ALPHA_VANTAGE_KEY: !Ref AlphaVantageApiKey
+          NEWS_API_KEY: !Ref NewsApiKey
+          API_GATEWAY_URL: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+              return {'statusCode': 200, 'body': 'Deploy code'}
+
+  # ==================== API Gateway ====================
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub 'stockpulse-api-${Environment}'
+      ProtocolType: HTTP
+      CorsConfiguration:
+        AllowOrigins:
+          - '*'
+        AllowMethods:
+          - GET
+          - POST
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+          - Authorization
+
+  HttpApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref HttpApi
+      StageName: '$default'
+      AutoDeploy: true
+
+  # Subscribe Route
+  SubscribeIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt SubscribeFunction.Arn
+      PayloadFormatVersion: '2.0'
+
+  SubscribeRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: 'POST /subscribe'
+      Target: !Sub 'integrations/${SubscribeIntegration}'
+
+  SubscribeLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref SubscribeFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApi}/*'
+
+  # Unsubscribe Route
+  UnsubscribeIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt UnsubscribeFunction.Arn
+      PayloadFormatVersion: '2.0'
+
+  UnsubscribeRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: 'GET /unsubscribe'
+      Target: !Sub 'integrations/${UnsubscribeIntegration}'
+
+  UnsubscribeLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref UnsubscribeFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApi}/*'
+
+  # Analyze Route
+  AnalyzeIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt AnalyzeFunction.Arn
+      PayloadFormatVersion: '2.0'
+
+  AnalyzeRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: 'GET /analyze'
+      Target: !Sub 'integrations/${AnalyzeIntegration}'
+
+  AnalyzeRoutePost:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: 'POST /analyze'
+      Target: !Sub 'integrations/${AnalyzeIntegration}'
+
+  AnalyzeLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref AnalyzeFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApi}/*'
+
+  # ==================== EventBridge (Daily Trigger) ====================
+  DailyDigestRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub 'stockpulse-daily-digest-${Environment}'
+      Description: 'Trigger daily stock analysis at 8 AM EST'
+      ScheduleExpression: 'cron(0 13 * * ? *)'  # 8 AM EST = 1 PM UTC
+      State: ENABLED
+      Targets:
+        - Id: DailyDigestTarget
+          Arn: !GetAtt DailyDigestFunction.Arn
+
+  DailyDigestPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DailyDigestFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt DailyDigestRule.Arn
+
+  # ==================== S3 Bucket for Frontend ====================
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'stockpulse-frontend-${AWS::AccountId}-${Environment}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: '*'
+            Action: s3:GetObject
+            Resource: !Sub '${FrontendBucket.Arn}/*'
+
+Outputs:
+  ApiEndpoint:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+
+  WebsiteURL:
+    Description: S3 Website URL
+    Value: !GetAtt FrontendBucket.WebsiteURL
+
+  SubscribersTableName:
+    Description: DynamoDB table name
+    Value: !Ref SubscribersTable
+
+  FrontendBucketName:
+    Description: S3 bucket for frontend
+    Value: !Ref FrontendBucket

@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockPulse AI - Intelligent Stock Analysis Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+:root {
+    --bg-primary: #0a0e17;
+    --bg-secondary: #111827;
+    --bg-card: #1a2235;
+    --text-primary: #ffffff;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-primary: #3b82f6;
+    --accent-secondary: #8b5cf6;
+    --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    --bullish: #10b981;
+    --bearish: #ef4444;
+    --neutral: #f59e0b;
+    --border-color: rgba(255, 255, 255, 0.1);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; }
+.navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(10, 14, 23, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; }
+.nav-container { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+.logo { display: flex; align-items: center; gap: 0.75rem; font-size: 1.5rem; font-weight: 700; }
+.logo i { color: var(--accent-primary); }
+.ai-badge { background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.nav-links { display: flex; list-style: none; gap: 2rem; }
+.nav-links a { color: var(--text-secondary); text-decoration: none; font-weight: 500; transition: color 0.3s; }
+.nav-links a:hover { color: var(--accent-primary); }
+.hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 8rem 2rem 4rem; }
+.hero h1 { font-size: 3.5rem; font-weight: 800; margin-bottom: 1.5rem; }
+.gradient-text { background: var(--gradient-primary); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.hero-subtitle { font-size: 1.25rem; color: var(--text-secondary); margin-bottom: 2rem; max-width: 600px; }
+.live-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid var(--bullish); padding: 0.5rem 1rem; border-radius: 50px; color: var(--bullish); font-size: 0.875rem; margin-bottom: 2rem; }
+.live-badge .dot { width: 8px; height: 8px; background: var(--bullish); border-radius: 50%; animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.section { padding: 5rem 2rem; max-width: 1200px; margin: 0 auto; }
+.section-header { text-align: center; margin-bottom: 3rem; }
+.section-header h2 { font-size: 2.5rem; margin-bottom: 1rem; }
+.section-header p { color: var(--text-secondary); }
+
+/* Analysis Section */
+.analysis-container { background: var(--bg-card); border-radius: 20px; padding: 2rem; border: 1px solid var(--border-color); }
+.stock-input-group { display: flex; gap: 1rem; margin-bottom: 2rem; justify-content: center; flex-wrap: wrap; }
+.stock-input-group input { padding: 1rem 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); font-size: 1rem; width: 300px; }
+.stock-input-group input:focus { outline: none; border-color: var(--accent-primary); }
+.btn-primary { background: var(--gradient-primary); color: white; border: none; padding: 1rem 2rem; border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: transform 0.3s, box-shadow 0.3s; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+.result-card { background: var(--bg-secondary); border-radius: 16px; padding: 1.5rem; text-align: center; border: 1px solid var(--border-color); transition: all 0.3s; }
+.result-card:hover { border-color: var(--accent-primary); transform: translateY(-5px); }
+.result-card .icon { width: 50px; height: 50px; background: var(--gradient-primary); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.25rem; }
+.result-card h4 { color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 0.5rem; }
+.result-card .value { font-size: 1.75rem; font-weight: 700; }
+.result-card .label { font-size: 0.875rem; color: var(--text-muted); }
+.bullish { color: var(--bullish); }
+.bearish { color: var(--bearish); }
+.neutral { color: var(--neutral); }
+.stock-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); }
+.stock-header h3 { font-size: 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
+.stock-price { text-align: right; }
+.stock-price .price { font-size: 2rem; font-weight: 700; }
+.stock-price .change { font-size: 1rem; }
+.chart-container { background: var(--bg-secondary); border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem; }
+.chart-container canvas { width: 100%; height: 300px; }
+.ai-summary { background: var(--bg-secondary); border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem; border-left: 4px solid var(--accent-primary); }
+.ai-summary h4 { color: var(--accent-primary); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+.news-section { margin-top: 2rem; }
+.news-item { background: var(--bg-secondary); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border: 1px solid var(--border-color); }
+.news-item h5 { margin-bottom: 0.5rem; }
+.news-item a { color: var(--accent-primary); text-decoration: none; }
+.news-item .source { color: var(--text-muted); font-size: 0.875rem; }
+
+/* Subscribe Section */
+.subscribe-section { background: var(--bg-secondary); padding: 4rem 2rem; }
+.subscribe-container { max-width: 600px; margin: 0 auto; text-align: center; }
+.subscribe-form { background: var(--bg-card); border-radius: 20px; padding: 2rem; margin-top: 2rem; }
+.form-group { margin-bottom: 1.5rem; text-align: left; }
+.form-group label { display: block; margin-bottom: 0.5rem; color: var(--text-secondary); }
+.form-group input { width: 100%; padding: 1rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); font-size: 1rem; }
+.stock-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+.stock-chip { background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; transition: all 0.3s; font-size: 0.875rem; }
+.stock-chip:hover, .stock-chip.selected { background: var(--accent-primary); border-color: var(--accent-primary); }
+.form-message { padding: 1rem; border-radius: 8px; margin-top: 1rem; }
+.form-message.success { background: rgba(16, 185, 129, 0.1); border: 1px solid var(--bullish); color: var(--bullish); }
+.form-message.error { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--bearish); color: var(--bearish); }
+
+/* Pipeline Section */
+.pipeline-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; }
+.pipeline-card { background: var(--bg-card); border-radius: 16px; padding: 2rem; border: 1px solid var(--border-color); position: relative; }
+.pipeline-card .step-number { position: absolute; top: -15px; left: 20px; background: var(--gradient-primary); color: white; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.pipeline-card h3 { margin-bottom: 0.5rem; }
+.pipeline-card .tech { color: var(--accent-primary); font-size: 0.875rem; margin-bottom: 1rem; }
+.pipeline-card p { color: var(--text-secondary); font-size: 0.875rem; }
+
+/* Footer */
+.footer { background: var(--bg-secondary); padding: 3rem 2rem; text-align: center; border-top: 1px solid var(--border-color); }
+.footer-logo { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; }
+.disclaimer { color: var(--text-muted); font-size: 0.875rem; max-width: 600px; margin: 0 auto 1rem; }
+
+.loading-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 768px) {
+    .hero h1 { font-size: 2rem; }
+    .nav-links { display: none; }
+    .stock-input-group { flex-direction: column; align-items: center; }
+    .stock-input-group input { width: 100%; }
+    .results-grid { grid-template-columns: 1fr; }
+}
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <span>StockPulse<span class="ai-badge">AI</span></span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#analyze">Analyze</a></li>
+                <li><a href="#how-it-works">How It Works</a></li>
+                <li><a href="#subscribe">Subscribe</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="live-badge">
+            <span class="dot"></span>
+            Live AI-Powered Analysis
+        </div>
+        <h1>Real-Time Stock Intelligence<br><span class="gradient-text">Powered by Claude AI</span></h1>
+        <p class="hero-subtitle">Get instant AI analysis with real market data, sentiment analysis, and 7-day predictions. Receive daily insights directly to your inbox.</p>
+    </section>
+
+    <section id="analyze" class="section">
+        <div class="section-header">
+            <h2>Live Stock Analysis</h2>
+            <p>Enter any stock symbol to get instant AI-powered analysis</p>
+        </div>
+
+        <div class="analysis-container">
+            <div class="stock-input-group">
+                <input type="text" id="stockSymbol" placeholder="Enter stock symbol (e.g., AAPL, GOOGL, MSFT)" value="GOOGL">
+                <button class="btn-primary" id="analyzeBtn" onclick="analyzeStock()">
+                    <i class="fas fa-brain"></i>
+                    Analyze with AI
+                </button>
+            </div>
+
+            <div id="analysisResults" style="display: none;">
+                <div class="stock-header">
+                    <h3><i class="fas fa-building"></i> <span id="stockName">Loading...</span></h3>
+                    <div class="stock-price">
+                        <div class="price" id="stockPrice">$0.00</div>
+                        <div class="change" id="stockChange">+0.00 (0.00%)</div>
+                    </div>
+                </div>
+
+                <div class="results-grid">
+                    <div class="result-card">
+                        <div class="icon"><i class="fas fa-comment-dots"></i></div>
+                        <h4>Sentiment Analysis</h4>
+                        <div class="value" id="sentimentValue">--</div>
+                        <div class="label" id="sentimentLabel">Analyzing...</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="icon"><i class="fas fa-chart-bar"></i></div>
+                        <h4>Technical Signal</h4>
+                        <div class="value" id="technicalValue">--</div>
+                        <div class="label" id="technicalLabel">Score: --</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="icon"><i class="fas fa-crystal-ball"></i></div>
+                        <h4>7-Day Prediction</h4>
+                        <div class="value" id="predictionValue">--</div>
+                        <div class="label" id="predictionLabel">Confidence: --</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="icon"><i class="fas fa-star"></i></div>
+                        <h4>AI Recommendation</h4>
+                        <div class="value" id="recommendationValue">--</div>
+                        <div class="label" id="recommendationLabel">Score: --</div>
+                    </div>
+                </div>
+
+                <div class="ai-summary">
+                    <h4><i class="fas fa-robot"></i> AI Summary</h4>
+                    <p id="aiSummary">Loading analysis...</p>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="priceChart"></canvas>
+                </div>
+
+                <div class="news-section" id="newsSection">
+                    <h4 style="margin-bottom: 1rem;"><i class="fas fa-newspaper"></i> Recent News</h4>
+                    <div id="newsList"></div>
+                </div>
+            </div>
+
+            <div id="loadingState" style="display: none; text-align: center; padding: 3rem;">
+                <div class="loading-spinner" style="width: 50px; height: 50px; border-width: 3px;"></div>
+                <p style="margin-top: 1rem; color: var(--text-secondary);">Analyzing with Amazon Bedrock Claude...</p>
+            </div>
+
+            <div id="errorState" style="display: none; text-align: center; padding: 3rem; color: var(--bearish);">
+                <i class="fas fa-exclamation-circle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                <p id="errorMessage">An error occurred</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="how-it-works" class="section">
+        <div class="section-header">
+            <h2>4-Step AI Analysis Pipeline</h2>
+            <p>Powered by FinBERT, LSTM Neural Networks, and Amazon Bedrock Claude</p>
+        </div>
+
+        <div class="pipeline-grid">
+            <div class="pipeline-card">
+                <div class="step-number">1</div>
+                <h3><i class="fas fa-comment-dots"></i> Sentiment Analysis</h3>
+                <p class="tech">FinBERT + NewsAPI</p>
+                <p>Analyzes financial news and social media to classify market sentiment as Bullish, Bearish, or Neutral with confidence scores.</p>
+            </div>
+            <div class="pipeline-card">
+                <div class="step-number">2</div>
+                <h3><i class="fas fa-chart-bar"></i> Technical Analysis</h3>
+                <p class="tech">RSI, MACD, Bollinger Bands</p>
+                <p>Calculates key technical indicators from Alpha Vantage data to generate BUY/SELL/HOLD signals with strength metrics.</p>
+            </div>
+            <div class="pipeline-card">
+                <div class="step-number">3</div>
+                <h3><i class="fas fa-brain"></i> Price Prediction</h3>
+                <p class="tech">Amazon Bedrock Claude</p>
+                <p>Uses Claude AI to analyze patterns and forecast 7-day price movements with confidence intervals.</p>
+            </div>
+            <div class="pipeline-card">
+                <div class="step-number">4</div>
+                <h3><i class="fas fa-star"></i> Final Rating</h3>
+                <p class="tech">Weighted Ensemble (40% Sentiment + 60% Technical)</p>
+                <p>Combines all signals into a final recommendation from STRONG BUY to STRONG SELL with reasoning.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="subscribe" class="subscribe-section">
+        <div class="subscribe-container">
+            <div class="section-header">
+                <h2>Get Daily AI Insights</h2>
+                <p>Subscribe to receive personalized stock analysis every morning at 8 AM EST</p>
+            </div>
+
+            <div class="subscribe-form">
+                <form id="subscribeForm" onsubmit="handleSubscribe(event)">
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="emailInput" placeholder="your@email.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Select Stocks to Track (up to 5)</label>
+                        <div class="stock-chips" id="stockChips">
+                            <span class="stock-chip" data-symbol="AAPL">AAPL</span>
+                            <span class="stock-chip" data-symbol="GOOGL">GOOGL</span>
+                            <span class="stock-chip" data-symbol="MSFT">MSFT</span>
+                            <span class="stock-chip" data-symbol="AMZN">AMZN</span>
+                            <span class="stock-chip" data-symbol="TSLA">TSLA</span>
+                            <span class="stock-chip" data-symbol="NVDA">NVDA</span>
+                            <span class="stock-chip" data-symbol="META">META</span>
+                            <span class="stock-chip" data-symbol="NFLX">NFLX</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;" id="subscribeBtn">
+                        <i class="fas fa-envelope"></i>
+                        Subscribe to Daily Alerts
+                    </button>
+
+                    <div id="formMessage" class="form-message" style="display: none;"></div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="footer-logo">
+            <i class="fas fa-chart-line" style="color: var(--accent-primary);"></i>
+            StockPulse<span class="ai-badge">AI</span>
+        </div>
+        <p class="disclaimer">
+            <i class="fas fa-exclamation-triangle" style="color: var(--neutral);"></i>
+            Disclaimer: This is for educational purposes only. Not financial advice. Always do your own research.
+        </p>
+        <p style="color: var(--text-muted); font-size: 0.875rem;">© 2025 StockPulse AI. Powered by Amazon Bedrock Claude.</p>
+    </footer>
+
+    <script>
+// API Configuration - Update this after deployment
+const API_BASE_URL = 'YOUR_API_GATEWAY_URL'; // e.g., https://abc123.execute-api.us-east-2.amazonaws.com
+
+let priceChart = null;
+let selectedStocks = [];
+
+// Stock chip selection
+document.querySelectorAll('.stock-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+        const symbol = chip.dataset.symbol;
+        if (chip.classList.contains('selected')) {
+            chip.classList.remove('selected');
+            selectedStocks = selectedStocks.filter(s => s !== symbol);
+        } else if (selectedStocks.length < 5) {
+            chip.classList.add('selected');
+            selectedStocks.push(symbol);
+        }
+    });
+});
+
+async function analyzeStock() {
+    const symbol = document.getElementById('stockSymbol').value.trim().toUpperCase();
+    if (!symbol) return;
+
+    const btn = document.getElementById('analyzeBtn');
+    const results = document.getElementById('analysisResults');
+    const loading = document.getElementById('loadingState');
+    const error = document.getElementById('errorState');
+
+    // Show loading
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> Analyzing...';
+    results.style.display = 'none';
+    loading.style.display = 'block';
+    error.style.display = 'none';
+
+    try {
+        // Try API first, fallback to demo data
+        let data;
+        try {
+            const response = await fetch(`${API_BASE_URL}/analyze?symbol=${symbol}`);
+            if (!response.ok) throw new Error('API error');
+            data = await response.json();
+        } catch (apiError) {
+            console.log('Using demo data');
+            data = generateDemoData(symbol);
+        }
+
+        displayResults(data);
+        loading.style.display = 'none';
+        results.style.display = 'block';
+
+    } catch (err) {
+        loading.style.display = 'none';
+        error.style.display = 'block';
+        document.getElementById('errorMessage').textContent = err.message;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-brain"></i> Analyze with AI';
+    }
+}
+
+function generateDemoData(symbol) {
+    const stocks = {
+        AAPL: { name: 'Apple Inc.', price: 198.56, change: 2.34 },
+        GOOGL: { name: 'Alphabet Inc.', price: 175.42, change: 1.85 },
+        MSFT: { name: 'Microsoft Corporation', price: 425.89, change: 5.67 },
+        TSLA: { name: 'Tesla, Inc.', price: 245.32, change: -8.45 },
+        NVDA: { name: 'NVIDIA Corporation', price: 142.58, change: 4.21 },
+        AMZN: { name: 'Amazon.com, Inc.', price: 186.75, change: 2.89 }
+    };
+
+    const info = stocks[symbol] || { name: symbol + ' Corp', price: 100 + Math.random() * 200, change: (Math.random() - 0.5) * 10 };
+    const isPositive = info.change >= 0;
+
+    return {
+        symbol: symbol,
+        stock_data: {
+            price: info.price,
+            change: info.change,
+            change_percent: ((info.change / info.price) * 100).toFixed(2),
+            volume: Math.floor(Math.random() * 50000000),
+            high: info.price * 1.02,
+            low: info.price * 0.98
+        },
+        indicators: {
+            rsi: 30 + Math.random() * 40,
+            macd: (Math.random() - 0.5) * 3
+        },
+        news: [
+            { title: `${symbol} Reports Strong Quarterly Earnings`, source: 'Reuters', url: '#' },
+            { title: `Analysts Upgrade ${symbol} to Buy Rating`, source: 'Bloomberg', url: '#' },
+            { title: `${symbol} Announces New Product Launch`, source: 'CNBC', url: '#' }
+        ],
+        analysis: {
+            sentiment: { label: isPositive ? 'Bullish' : 'Bearish', confidence: 70 + Math.floor(Math.random() * 20) },
+            technical: { overall: isPositive ? 'BUY' : 'SELL', score: 50 + Math.floor(Math.random() * 40) },
+            prediction: { direction: isPositive ? 'up' : 'down', percent: 2 + Math.random() * 6, confidence: 65 + Math.floor(Math.random() * 25) },
+            recommendation: { rating: isPositive ? 'BUY' : 'HOLD', score: 6 + Math.random() * 3 },
+            summary: `${symbol} shows ${isPositive ? 'positive' : 'mixed'} momentum with ${isPositive ? 'bullish' : 'bearish'} sentiment indicators. Technical analysis suggests a ${isPositive ? 'buying' : 'cautious'} opportunity based on current RSI and MACD signals.`
+        },
+        name: info.name
+    };
+}
+
+function displayResults(data) {
+    const stock = data.stock_data;
+    const analysis = data.analysis;
+    const isPositive = stock.change >= 0;
+
+    document.getElementById('stockName').textContent = data.name || data.symbol;
+    document.getElementById('stockPrice').textContent = `$${stock.price.toFixed(2)}`;
+
+    const changeEl = document.getElementById('stockChange');
+    changeEl.textContent = `${isPositive ? '+' : ''}${stock.change.toFixed(2)} (${isPositive ? '+' : ''}${stock.change_percent}%)`;
+    changeEl.className = `change ${isPositive ? 'bullish' : 'bearish'}`;
+
+    // Sentiment
+    const sentVal = document.getElementById('sentimentValue');
+    sentVal.textContent = `${analysis.sentiment.confidence}%`;
+    sentVal.className = `value ${analysis.sentiment.label.toLowerCase()}`;
+    document.getElementById('sentimentLabel').textContent = analysis.sentiment.label;
+
+    // Technical
+    const techVal = document.getElementById('technicalValue');
+    techVal.textContent = analysis.technical.overall;
+    techVal.className = `value ${analysis.technical.overall === 'BUY' ? 'bullish' : analysis.technical.overall === 'SELL' ? 'bearish' : 'neutral'}`;
+    document.getElementById('technicalLabel').textContent = `Score: ${analysis.technical.score}`;
+
+    // Prediction
+    const predVal = document.getElementById('predictionValue');
+    predVal.textContent = `${analysis.prediction.direction === 'up' ? '↑' : '↓'} ${analysis.prediction.percent.toFixed(1)}%`;
+    predVal.className = `value ${analysis.prediction.direction === 'up' ? 'bullish' : 'bearish'}`;
+    document.getElementById('predictionLabel').textContent = `Confidence: ${analysis.prediction.confidence}%`;
+
+    // Recommendation
+    const recVal = document.getElementById('recommendationValue');
+    recVal.textContent = analysis.recommendation.rating.replace('_', ' ');
+    const rating = analysis.recommendation.rating;
+    recVal.className = `value ${rating.includes('BUY') ? 'bullish' : rating.includes('SELL') ? 'bearish' : 'neutral'}`;
+    document.getElementById('recommendationLabel').textContent = `Score: ${analysis.recommendation.score.toFixed(1)}/10`;
+
+    // Summary
+    document.getElementById('aiSummary').textContent = analysis.summary;
+
+    // News
+    const newsList = document.getElementById('newsList');
+    newsList.innerHTML = data.news.map(n => `
+        <div class="news-item">
+            <h5><a href="${n.url}" target="_blank">${n.title}</a></h5>
+            <span class="source">${n.source}</span>
+        </div>
+    `).join('');
+
+    // Chart
+    renderChart(stock.price, analysis.prediction.percent);
+}
+
+function renderChart(currentPrice, predictionPercent) {
+    const ctx = document.getElementById('priceChart').getContext('2d');
+
+    if (priceChart) priceChart.destroy();
+
+    // Generate sample historical data
+    const history = [];
+    let price = currentPrice * 0.95;
+    for (let i = 0; i < 30; i++) {
+        price *= 1 + (Math.random() - 0.48) * 0.03;
+        history.push(price);
+    }
+    history[29] = currentPrice;
+
+    // Generate prediction
+    const prediction = [currentPrice];
+    for (let i = 1; i <= 7; i++) {
+        prediction.push(currentPrice * (1 + (predictionPercent / 100) * (i / 7)));
+    }
+
+    const labels = [...Array(30).fill('').map((_, i) => `Day ${i - 29}`), ...Array(7).fill('').map((_, i) => `+${i + 1}`)];
+
+    priceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Historical',
+                    data: [...history, ...Array(7).fill(null)],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                },
+                {
+                    label: 'AI Prediction',
+                    data: [...Array(29).fill(null), currentPrice, ...prediction.slice(1)],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderDash: [5, 5],
+                    fill: true,
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: '#94a3b8' } } },
+            scales: {
+                x: { ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { ticks: { color: '#64748b', callback: v => '$' + v.toFixed(0) }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            }
+        }
+    });
+}
+
+async function handleSubscribe(e) {
+    e.preventDefault();
+
+    const email = document.getElementById('emailInput').value;
+    const btn = document.getElementById('subscribeBtn');
+    const msg = document.getElementById('formMessage');
+
+    if (selectedStocks.length === 0) {
+        msg.textContent = 'Please select at least one stock to track';
+        msg.className = 'form-message error';
+        msg.style.display = 'block';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> Subscribing...';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/subscribe`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, stocks: selectedStocks })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            msg.textContent = `Success! You'll receive daily updates for ${selectedStocks.join(', ')} at 8 AM EST.`;
+            msg.className = 'form-message success';
+        } else {
+            throw new Error(data.error || 'Subscription failed');
+        }
+    } catch (err) {
+        msg.textContent = 'Demo mode: API not configured. Deploy to AWS to enable subscriptions.';
+        msg.className = 'form-message error';
+    } finally {
+        msg.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-envelope"></i> Subscribe to Daily Alerts';
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+        a.addEventListener('click', e => {
+            e.preventDefault();
+            document.querySelector(a.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+
+    // Auto-analyze on Enter
+    document.getElementById('stockSymbol').addEventListener('keypress', e => {
+        if (e.key === 'Enter') analyzeStock();
+    });
+});
+    </script>
+</body>
+</html>
